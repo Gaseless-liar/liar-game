@@ -2,7 +2,7 @@ import gasless_liar_abi from "../abi/GasLessLiar.json";
 import { Abi, Contract } from "starknet";
 
 export const gaslessLiarContract: string =
-  "0x00cfdceb1ea755e482d91eaf2ef8fbfc29a3628e467c99e67b40b76dadadf837";
+  "0x00cf192bbe0edff598fe8ab801dc36cd656d3c140f0aa68cd56c167d506b1cb3";
 
 export function useGaslessLiarContract() {
     const gaslessGame = new Contract(

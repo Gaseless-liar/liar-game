@@ -20,7 +20,7 @@ import { getStarknet, IStarknetWindowObject } from "get-starknet";
 import { GetBlockResponse } from "starknet";
 import BN from "bn.js";
 import { getKeyPair } from "starknet/utils/ellipticCurve";
-import { checkIntegrity, makeState1, makeState2, makeState3 } from "../utils/state";
+import { checkIntegrity, checkIntegrity2, makeState1, makeState2, makeState3 } from "../utils/state";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -31,6 +31,7 @@ const Play: NextPage = () => {
     index: 0,
     card: 0,
   });
+  const [startingCard, setStartingCard] = useState<any>();
   const [isOnChainCreationAvailable, setIsOnChainCreationAvailable] =
     useState<boolean>(false);
 
@@ -45,50 +46,6 @@ const Play: NextPage = () => {
   const [shouldSendFraudProof, setShouldSendFraudProof] =
     useState<boolean>(false);
   const [areTransactionsPassed, setAreTransactionsPassed] = useState(false);
-
-  /*
-  function draw(): void {
-    
-
-    // reveal le hash et demander à l'adversaire de générer un nb alétoire
-
-    // recevoir le nb alétoire de l'adversaire
-    const rn2 = 1;
-
-    playerCards.push((rn1 + rn2) % 12);
-  }
-
-  // function depositCard(): void {
-  //   removeCard(cardToDeposit, playerCards);  
-  //   playerDepositedCards.push(cardToDeposit);
-  //   setLastAnnouncedCard(cardToAnnounce);
-  //   sendValue(cardToAnnounce);
-  //   sendValue(depositedHash); // est ce qu'on recalcule le hash ?
-  //   // change turn
-  // }
-
-  // function tellThatHeIsLying(): void {
-  //   const revealed = accuseOpponent();
-  //   if (revealed >= lastAnnouncedCard) {
-  //       retrieveCards();
-  //   } else {
-  //       roundWon();
-  //       setLastAnnouncedCard(0);
-  //       playerDepositedCards = [];
-  //   }
-  //   // envoie de fraud proof si jamais pas de reponse
-  // }
-
-  // function retrieveCards(): void {
-  //   // demander opponentDepositedCards et vérifier que ces valeurs sont cohérentes avec les hashs de opponentDepositedCards
-  //   const opponentDepositedCardsValues = getValue();
-  //   verifyCardsIntegrity(opponentDepositedCardsValues, opponentDepositedCards);
-  //   playerCards.concat(opponentDepositedCards);
-    
-  //   // changer tour de jeu
-  // }
-    // changer tour de jeu
-  }*/
 
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
@@ -132,12 +89,7 @@ const Play: NextPage = () => {
               return oldBlock;
             }
             console.log('newBlock', newBlock)
-            newBlock.transactions.push({
-              transaction_hash: '111'
-            })
-            newBlock.transactions.push({
-              transaction_hash: '222'
-            })
+
             console.log('transactions', transactions)
             if (transactions)
               console.log('length', Object.keys(transactions).length)
@@ -233,16 +185,12 @@ const Play: NextPage = () => {
         }),
       ],
     });
-
-    console.log("libp2p", libp2p);
     await libp2p.start();
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
-
     const _starknet = await getStarknet();
     await _starknet.enable({ showModal: true });
     setStarknet(_starknet)
-
     generateKey();
     const timer = setTimeout(() => {
       var btnMsg = document.getElementById("sendKeyB");
@@ -251,7 +199,6 @@ const Play: NextPage = () => {
         console.log('CLICKING')
       }
     }, 1000);
-    
     setIsInit(true);
     setPlayer(2);
   };
@@ -373,8 +320,6 @@ const Play: NextPage = () => {
         var data = uint8ArrayToString(evt.detail.data)
         console.log('message received', data)
         var msg = data.split('|')
-        // var msgType = msg[0].split(':')
-        console.log('msg received', msg)
 
         if (msg[0] == 'pubKeyB') {
             setOtherPubKey(msg[1])
@@ -383,7 +328,6 @@ const Play: NextPage = () => {
           setOtherPubKey(msg[1])
           startGameP2()
         } else if (msg[0] == 'ready') {
-          // setAreTransactionsPassed(true)
           launchState1()
         } else if (msg[0] == 'state1') {
           console.log('state1 received from A', msg)
@@ -396,19 +340,11 @@ const Play: NextPage = () => {
             'type' : 1,
            }
           stateTable.push(_state1)
-
-          console.log('stateTable', stateTable)
-          console.log('_sig', _sig)
-
           var _key = new BN(otherPubKey.substring(2), 16)
           const [generateDisputeId, sigState1] = checkIntegrity(_state1, [_sig[0], _sig[1]], gameId, _key, keyPair, stateTable)
-          console.log('generateDisputeId', generateDisputeId)
-          console.log('sigState1', sigState1)
 
           if (!generateDisputeId && !sigState1) {
             const [state2, sig2] = makeState2(_state1, [_sig[0], _sig[1]], gameId, _key, keyPair, stateTable)
-            console.log('state2', state2)
-            console.log('sig2', sig2)
             setState2(state2)
             setSig2(sig2)
             const timer = setTimeout(() => {
@@ -443,48 +379,78 @@ const Play: NextPage = () => {
             }
           }
         } else if (msg[0] == 'state2') {
-          console.log('state2 received', msg)
+          console.log('state2 received from B', msg)
           const prevStateHash = msg[1].split(':')[1]
           const _s2 = msg[2].split(':')[1]
-          const _h1 =  msg[3].split(':')[1]
-          const _sig2 = msg[4].split(':')[1]
+          const _sig2 = msg[3].split(':')[1]
           const _sig = _sig2.split(',')
-          console.log('_sig', _sig)
-
           const _state2 = {
             'gameId' : gameId,
             'prevStateHash' : prevStateHash,
             's2' : _s2,
-            'h1' : _h1,
+            'h1' : stateTable[0].h1,
             'type' : 2
           }
           stateTable.push(_state2)
 
           var _key = new BN(otherPubKey.substring(2), 16)
-          // const [generateDisputeId, sigState1] = checkIntegrity(_state2, [_sig[0], _sig[1]], 0, _key, keyPair, stateTable)
-          // console.log('generateDisputeId', generateDisputeId)
-          console.log('s1', s1)
+          const [generateDisputeId, sigState1] = checkIntegrity2(_state2, [_sig[0], _sig[1]], s1, stateTable[0].h1, gameId, otherPubKey, keyPair, stateTable)
 
-          const [state3, sig] = makeState3(_state2, [_sig[0], _sig[1]], s1, _h1, gameId, otherPubKey, keyPair, stateTable)
+          if (!generateDisputeId && !sigState1) {
+            // TODO multicall 
+            // open_dispute_state_2(generateDisputeId, gameId, prevStateHash, _s2, h1, [_sig[0], _sig[1]])
 
-          console.log('state3', state3)
-          console.log('sig', sig)
-          setState3(state3)
-          setSig3(sig)
+          } else {
+            const [state3, sig] = makeState3(_state2, [_sig[0], _sig[1]], s1, stateTable[0].h1, gameId, otherPubKey, keyPair, stateTable)
+            setState3(state3)
+            setSig3(sig)
+            const timer = setTimeout(() => {
+              var btnMsg = document.getElementById("sendState3");
+              if (btnMsg) {
+                btnMsg.click()
+                console.log('CLICKING state 3')
+              }
+            }, 1000);
+          }
+        } else if (msg[0] == 'state3') {
+          // Rebuild state3
+          console.log('state3 received from A', msg)
+          const prevStateHash = msg[1].split(':')[1]
+          const _s1 = msg[2].split(':')[1]
+          const _startingCard = msg[3].split(":")[1]
+          const _sig2 = msg[5].split(':')[1]
+          const _sig = _sig2.split(',')
+          console.log('_sig', _sig)
+
+          const _state3 = {
+            'gameId': gameId,
+            'prevStateHash': prevStateHash,
+            's1': _s1,
+            'startingCard': _startingCard,
+            'type': 3
+          };
+          stateTable.push(_state3)
+          setAreTransactionsPassed(true)
+          var card : any = new BN(_startingCard, 16)
+          setStartingCard(card.umod(13));
+          console.log('card', card)
+
           const timer = setTimeout(() => {
-            var btnMsg = document.getElementById("sendState3");
+            var btnMsg = document.getElementById("canPlay");
             if (btnMsg) {
               btnMsg.click()
-              console.log('CLICKING state 3')
+              console.log('CLICKING canPlay')
             }
           }, 1000);
-
-        } else if (msg[0] == 'sendDispute') {
-
-
         } else if (msg[0] == 'sendDispute') {
           console.log('statedispute')
           setOngoingDispute(true)
+        } else if (msg[0] == 'canPlay') {
+          console.log('can Play to player B')
+          setAreTransactionsPassed(true);
+          var card : any = new BN(stateTable[2].startingCard, 16)
+          setStartingCard(card.umod(13));
+          console.log('card', card)
         }
       });
     }
@@ -508,75 +474,49 @@ const Play: NextPage = () => {
 
   const startGame = async () => {
     console.log('starting game')
-    // Send multicall 
-    // ! uncomment 
-    // var calls : any[] = [];
+    var calls : any[] = [];
     var _account = _starknet?.account.address.slice(2)
     var _sig = sign(keyPair, _account as string)
-    // calls.push({
-    //     contractAddress: gaslessContract.address.toLowerCase(),
-    //     entrypoint: 'create_game',
-    //     calldata: [gameId, 10, getStarkKey(keyPair) as string, otherPubKey]
-    // });
-    // calls.push({
-    //     contractAddress: gaslessContract.address.toLowerCase(),
-    //     entrypoint: 'set_a_user',
-    //     calldata: [gameId, _sig]
-    // });
-    // if(_starknet)
-    //   _starknet.account.execute(calls).then((response: any) => {
-    //     response.player = player
-    //     setTransactions(response)
-    //   })
-
-      var tx = []
-      const response = {
-        code: 'TX_RECEIVED',
-        transaction_hash : "111",
-        player: player
-      }
-      tx.push(response)
-      setTransactions(tx)
+    calls.push({
+        contractAddress: gaslessContract.address.toLowerCase(),
+        entrypoint: 'create_game',
+        calldata: [gameId, 10, getStarkKey(keyPair) as string, otherPubKey]
+    });
+    calls.push({
+        contractAddress: gaslessContract.address.toLowerCase(),
+        entrypoint: 'set_a_user',
+        calldata: [gameId, _sig]
+    });
+    if(_starknet)
+      _starknet.account.execute(calls).then((response: any) => {
+        response.player = player
+        setTransactions(response)
+      })
   }
 
   const startGameP2 = async () => {
     // Send multicall 
-    // if(_starknet) {
-    //   var _account = _starknet?.account.address.slice(2)
-    //   var _sig = sign(keyPair, _account as string)
-    //   _starknet.account.execute({
-    //     contractAddress: gaslessContract.address.toLowerCase(),
-    //     entrypoint: 'set_a_user',
-    //     calldata: [gameId, 'sig(felt, felt']
-    //   }).then((response: any) => {
-    //     response.player = player
-    //     setTransactions(response)
-    //   })
-    // }
-    console.log('start game 2')
-    var tx = []
-    const response = {
-      code: 'TX_RECEIVED',
-      transaction_hash : "222",
-      player: player
+    if(_starknet) {
+      var _account = _starknet?.account.address.slice(2)
+      var _sig = sign(keyPair, _account as string)
+      _starknet.account.execute({
+        contractAddress: gaslessContract.address.toLowerCase(),
+        entrypoint: 'set_b_user',
+        calldata: [gameId, _sig]
+      }).then((response: any) => {
+        response.player = player
+        setTransactions(response)
+      })
     }
-    tx.push(response)
-    setTransactions(tx)
   }
 
   const launchState1 = () => {
     console.log('launching state 1')
     const [ state1, sig, s1, h1 ] = makeState1(gameId, keyPair, stateTable);
-    console.log('stateTable', stateTable)
-    // stateTable.push({})
     setState1(state1)
-    console.log('s1', s1)
-    console.log('h1', h1)
-    console.log('sig', sig)
     setH1(h1)
     setS1(s1)
     setSig1(sig)
-
     const timer = setTimeout(() => {
       var btnMsg = document.getElementById("sendState1");
       if (btnMsg) {
@@ -781,9 +721,10 @@ const Play: NextPage = () => {
       <button id='sendKeyA' onClick={() => sendMessage('pubKeyA|'+ getStarkKey(keyPair))} style={{display: 'none'}}></button>
       <button id='sendReady' onClick={() => sendMessage('ready|')} style={{display: 'none'}}></button>
       <button id='sendState1' onClick={() => sendMessage('state1|h1:'+h1+'|sig:'+sig1)} style={{display: 'none'}}></button>
-      <button id='sendState2' onClick={() => sendMessage('state2|prevStateHash:'+state2.prevStateHash+'|s2:'+state2.s2+'|h1:'+state2.h1+'|type:'+state2.type+'|sig:'+sig2)} style={{display: 'none'}}></button>
+      <button id='sendState2' onClick={() => sendMessage('state2|prevStateHash:'+state2.prevStateHash+'|s2:'+state2.s2+'|h1:'+state2.h1+'|sig:'+sig2)} style={{display: 'none'}}></button>
       <button id='sendState3' onClick={() => sendMessage('state3|prevStateHash:'+state3.prevStateHash+'|s1:'+state3.s1+'|startingCard:'+state3.startingCard+'|type:'+state3.type+'|sig:'+sig3)} style={{display: 'none'}}></button>
       <button id='sendDispute' onClick={() => sendMessage('disputeOngoing|')} style={{display: 'none'}}></button>
+      <button id='canPlay' onClick={() => sendMessage('canPlay|')} style={{display: 'none'}}></button>
     </div>
   );
 };

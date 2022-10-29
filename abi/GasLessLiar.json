@@ -251,6 +251,10 @@
             {
                 "name": "sig",
                 "type": "(felt, felt)"
+            },
+            {
+                "name": "prev_sig",
+                "type": "(felt, felt)"
             }
         ],
         "name": "open_dispute_state_2",
@@ -285,6 +289,84 @@
             }
         ],
         "name": "close_dispute_state_2",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "dispute",
+                "type": "felt"
+            },
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "disp2_prev_state_hash",
+                "type": "felt"
+            },
+            {
+                "name": "disp2_s2",
+                "type": "felt"
+            },
+            {
+                "name": "disp2_h1",
+                "type": "felt"
+            },
+            {
+                "name": "disp2_sig",
+                "type": "(felt, felt)"
+            },
+            {
+                "name": "disp3_s1",
+                "type": "felt"
+            },
+            {
+                "name": "disp3_starting_card",
+                "type": "felt"
+            },
+            {
+                "name": "disp3_sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "open_dispute_state_3",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "dispute",
+                "type": "felt"
+            },
+            {
+                "name": "ah0",
+                "type": "felt"
+            },
+            {
+                "name": "ah1",
+                "type": "felt"
+            },
+            {
+                "name": "ah2",
+                "type": "felt"
+            },
+            {
+                "name": "ah3",
+                "type": "felt"
+            },
+            {
+                "name": "seed_b",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "close_dispute_state_3",
         "outputs": [],
         "type": "function"
     },
