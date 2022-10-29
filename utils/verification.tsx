@@ -5,7 +5,8 @@ import { sign, verify, getKeyPairFromPublicKey, getKeyPair } from 'starknet/util
 export function verifyIntegrity(toCompare: [any, any][]): void {
     toCompare.forEach(pair => {
         if (pair[0] !== pair[1])
-
+            //renvoie message au front
+            //+ info  + disputeID
     });
 }
 

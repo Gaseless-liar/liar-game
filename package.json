@@ -22,6 +22,7 @@
     "@starknet-react/core": "^0.14.0",
     "libp2p": "^0.40.0",
     "math": "^0.0.3",
+    "mathjs": "^11.3.2",
     "next": "12.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
