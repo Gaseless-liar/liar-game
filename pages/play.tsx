@@ -14,6 +14,7 @@ import { bootstrap } from "@libp2p/bootstrap";
 import { floodsub } from "@libp2p/floodsub";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { drawStartingCard } from "../utils/playerActions";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -39,9 +40,9 @@ const Play: NextPage = () => {
     useState<boolean>(false);
   const [areTransactionsPassed, setAreTransactionsPassed] = useState(false);
 
+  /*
   function draw(): void {
-    // générer un nb alétoire
-    const rn1 = Math.floor(Math.random() * 12);
+    
 
     // reveal le hash et demander à l'adversaire de générer un nb alétoire
 
@@ -79,7 +80,7 @@ const Play: NextPage = () => {
     playerCards.concat(opponentDepositedCards);
     
     // changer tour de jeu
-  }
+  }*/
 
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
