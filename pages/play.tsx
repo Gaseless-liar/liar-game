@@ -18,6 +18,7 @@ import { useGaslessLiarContract } from "../hooks/contracts";
 import { ec, getStarkKey } from "starknet/dist/utils/ellipticCurve";
 import { getStarknet, IStarknetWindowObject } from "get-starknet";
 import { GetBlockResponse } from "starknet";
+import { drawStartingCard } from "../utils/playerActions";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -43,9 +44,9 @@ const Play: NextPage = () => {
     useState<boolean>(false);
   const [areTransactionsPassed, setAreTransactionsPassed] = useState(false);
 
+  /*
   function draw(): void {
-    // générer un nb alétoire
-    const rn1 = Math.floor(Math.random() * 12);
+    
 
     // reveal le hash et demander à l'adversaire de générer un nb alétoire
 
@@ -84,6 +85,8 @@ const Play: NextPage = () => {
     
   //   // changer tour de jeu
   // }
+    // changer tour de jeu
+  }*/
 
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
