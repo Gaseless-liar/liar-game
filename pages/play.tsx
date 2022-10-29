@@ -151,9 +151,7 @@ const Play: NextPage = () => {
                     if (elem.player == 1) {
                       console.log('sending msg to P2')
                       var btnMsg = document.getElementById("btnMsg");
-                        btnMsg.onclick = function() {
-                          hangoutButton.click(); // this will trigger the click event
-                        };
+                      if (btnMsg) btnMsg.click()
                       sendMessage('pubKey:'+ getStarkKey(keyPair))
                     }
                     else if (elem.player == 2) {
@@ -202,6 +200,7 @@ const Play: NextPage = () => {
     const libp2p = await createLibp2p({
       addresses: {
         listen: [
+          '/ip4/0.0.0.0/tcp/0',
           "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
           "/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
         ],
@@ -228,6 +227,8 @@ const Play: NextPage = () => {
     setStarknet(_starknet)
 
     generateKey();
+    var btnMsg = document.getElementById("sendKey1");
+    if (btnMsg) btnMsg.click()
     
     setIsInit(true);
     setPlayer(2);
@@ -247,6 +248,7 @@ const Play: NextPage = () => {
     const libp2p = await createLibp2p({
       addresses: {
         listen: [
+          '/ip4/0.0.0.0/tcp/0',
           "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
           "/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
         ],
@@ -337,25 +339,40 @@ const Play: NextPage = () => {
 
         var data = uint8ArrayToString(evt.detail.data)
         console.log('message received', data)
-        var msg = data.split(',')
-        var msgType = msg[0].split(':')
-        console.log('msgType', msgType)
+        var msg = data.split('|')
+        // var msgType = msg[0].split(':')
+        console.log('msg received', msg)
 
-        if (msgType[0] == 'pubKey') {
-            setOtherPubKey(msgType[1])
+        if (msg[0] == 'pubKeyB') {
+            setOtherPubKey(msg[1])
             if(player == 1) startGame()
             else startGameP2()
-        } else if (msgType[0] == 'ready') {
+        } else if (msg[0] == 'pubKeyA') {
+          setOtherPubKey(msg[1])
+        } else if (msg[0] == 'ready') {
           setAreTransactionsPassed(true)
 
           // Player A calls : 
           const [ state1, sig ] = makeState1(gameId, keyPair, stateTable);
+          // TODO check if stateTable est bien updated 
           console.log('stateTable', stateTable);
+          // var data = 'state1|' + 
+
+          // A sends value to B 
+          // State 1 
+          // Sig : 2 values
+          // sendMessage()
+        } else if (msg[0] == 'state1') {
+          console.log('state1', msg)
+        } else if (msg[0] == 'state2') {
+          console.log('state2', msg)
         }
+
 
         // Messages : 
         // player B a rejoint la partie on-chain > A calls create_state_1 & send return value to player B
         // B calls create_state_2 & send return value to player A
+        // const [ state2, sig ] = makeState2(state1: any, sigState1: Signature, gameId: number, oldH1: string, pubKeyA: BigNumberish, keyPairB: KeyPair, stateTable:any[])
       });
     }
   }, [libp2p, isInit]);
@@ -602,7 +619,7 @@ const Play: NextPage = () => {
                 <h1>We&apos;re initializing the game</h1>
                 <Button
                   onClick={() => {
-                    sendMessage('pubKey:'+ getStarkKey(keyPair))
+                    sendMessage('pubKeyB|pubKey:'+ getStarkKey(keyPair))
                   }}
                   size="small"
                 >
@@ -615,7 +632,7 @@ const Play: NextPage = () => {
       ) : (
         <Button onClick={() => initGame()}>Create game</Button>
       )}
-      <Button onClick={() => testSig()}></Button>
+      <button id='sendKey1' onClick={() => sendMessage('pubKeyA|pubKey:'+ getStarkKey(keyPair))} style={{display: 'none'}}></button>
     </div>
   );
 };
