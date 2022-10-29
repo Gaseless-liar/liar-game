@@ -4,7 +4,7 @@ import { BigNumberish } from 'starknet/utils/number';
 import { randomGenerator, hash, randomAndHash } from './utils';
 import { signH, verifyIntegrity, verifySig } from './verification';
 
-export function makeState1(gameId: number, keyPairA: KeyPair, stateTable:any[]): [any, Signature] {
+export function makeState1(gameId: number, keyPairA: KeyPair, stateTable:any[]): [any, Signature, any, any] {
     const [s1, h1] = randomAndHash();
     const state1 = {
         'gameId' : gameId,
@@ -14,7 +14,7 @@ export function makeState1(gameId: number, keyPairA: KeyPair, stateTable:any[]):
     const stateHash = computeHashOnElements([state1.gameId, state1.h1, state1.type]);
     const sig = signH(keyPairA, stateHash);
     stateTable.push(state1);
-    return [state1, sig];
+    return [state1, sig, s1, h1];
 }
 //call open_dispute_state_1 with disputeId gameId, h1 and sig
 
