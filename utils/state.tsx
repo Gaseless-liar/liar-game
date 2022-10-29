@@ -4,7 +4,7 @@ import { BigNumberish } from 'starknet/utils/number';
 import { randomGenerator, hash, randomAndHash } from './utils';
 import { signH, verifyIntegrity, verifySig } from './verification';
 
-export function makeState1(gameId: number, privKeyA: string, stateTable:any[]): [any, Signature] {
+export function makeState1(gameId: number, keyPairA: string, stateTable:any[]): [any, Signature] {
     const [s1, h1] = randomAndHash();
     const state1 = {
         'gameId' : gameId,
@@ -12,14 +12,14 @@ export function makeState1(gameId: number, privKeyA: string, stateTable:any[]): 
         'type' : 1,
     };
     const stateHash = computeHashOnElements([state1.gameId, state1.h1, state1.type]);
-    const sig = signH(privKeyA, stateHash);
+    const sig = signH(keyPairA, stateHash);
     stateTable.push(state1);
     return [state1, sig];
 }
 //call open_dispute_state_1 with disputeId gameId, h1 and sig
 
 export function makeState2(
-        state1: any, sigState1: Signature, gameId: number, oldH1: string, pubKeyA: BigNumberish, privKeyB: BigNumberish, stateTable:any[]
+        state1: any, sigState1: Signature, gameId: number, oldH1: string, pubKeyA: BigNumberish, keyPairB: BigNumberish, stateTable:any[]
     ): [any, Signature]  {
     if (!verifyIntegrity([[state1.gameId, gameId], [state1.type, 1], [oldH1, state1.h1]])) {
         //generate disputeId
@@ -37,13 +37,13 @@ export function makeState2(
        'type' : 2
     };
     const stateHash = computeHashOnElements([state2.gameId, state2.prevStateHash, state2.h1, state2.type]);
-    const sig = signH(privKeyB, stateHash);
+    const sig = signH(keyPairB, stateHash);
     stateTable.push(state2);
     return [state2, sig];
 }
 
 export function makeState3(
-        state2: any, sigState2: Signature, gameId: number, s1: any, oldS2: any, pubKeyB: BigNumberish, privKeyA: BigNumberish, stateTable:any[]
+        state2: any, sigState2: Signature, gameId: number, s1: any, oldS2: any, pubKeyB: BigNumberish, keyPairA: BigNumberish, stateTable:any[]
     ): [any, Signature] {
     verifyIntegrity([[state2.gameId, gameId], [state2.type, 2], [hash(s1), state2.h1]]);
     const state2Hashed = computeHashOnElements([state2.gameId, state2.prevStateHash, state2.s2, state2.h1, state2.type]);
@@ -57,7 +57,7 @@ export function makeState3(
         'type': 3
     };
     const stateHash = computeHashOnElements([]);
-    const sig = signH(privKeyA, stateHash);
+    const sig = signH(keyPairA, stateHash);
     stateTable.push(state3);
     return [state3, sig];
 }
