@@ -52,29 +52,32 @@ const Play: NextPage = () => {
   }
 
   function depositCard(): void {
-    // enlever cardToDeposit de playerCards
-    // ajouter cardToDeposit à playerDepositedCards
-    // prendre cardToAnnounce et setLastAnnouncedCard()
-    // envoyer cardToAnnounce et hash de la card déposée
-    // changer tour de jeu
+    removeCard(cardToDeposit, playerCards);  
+    playerDepositedCards.push(cardToDeposit);
+    setLastAnnouncedCard(cardToAnnounce);
+    sendValue(cardToAnnounce);
+    sendValue(depositedHash); // est ce qu'on recalcule le hash ?
+    // change turn
   }
 
   function tellThatHeIsLying(): void {
-    // Envoie au deuxième joueur qu'il ment
-    // if (Reveal la card == perdu ) {
-    // retrieveCards()
-    // } else if (Reveal la card == perdu) {
-    // affichage que j'ai gagné
-    // setLastAnnouncedCard(0)
-    // playerDepositedCards = [];
-    // }
-    // - ou envoie de fraud proof
+    const revealed = accuseOpponent();
+    if (revealed >= lastAnnouncedCard) {
+        retrieveCards();
+    } else {
+        roundWon();
+        setLastAnnouncedCard(0);
+        playerDepositedCards = [];
+    }
+    // envoie de fraud proof si jamais pas de reponse
   }
 
   function retrieveCards(): void {
     // demander opponentDepositedCards et vérifier que ces valeurs sont cohérentes avec les hashs de opponentDepositedCards
-    // si différent setShouldSendFraudProof(true)
-    // ajouter les opponentDepositedCards à playerCards
+    const opponentDepositedCardsValues = getValue();
+    verifyCardsIntegrity(opponentDepositedCardsValues, opponentDepositedCards);
+    playerCards.concat(opponentDepositedCards);
+    
     // changer tour de jeu
   }
 
