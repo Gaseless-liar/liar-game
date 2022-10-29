@@ -14,7 +14,7 @@ import { bootstrap } from "@libp2p/bootstrap";
 import { floodsub } from "@libp2p/floodsub";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { useGaslessLiarContract } from "../hooks/contracts";
+import { useEthereumContract, useGaslessLiarContract } from "../hooks/contracts";
 import { ec, getStarkKey, sign } from "starknet/dist/utils/ellipticCurve";
 import { getStarknet, IStarknetWindowObject } from "get-starknet";
 import { GetBlockResponse } from "starknet";
@@ -71,6 +71,7 @@ const Play: NextPage = () => {
   const [keyPair, setKeyPair] = useState({})
   const [otherPubKey, setOtherPubKey] = useState('')
   const gaslessContract = useGaslessLiarContract();
+  const ethContract = useEthereumContract();
 
 
   // ----------- blocks, transactions -----------
@@ -397,8 +398,27 @@ const Play: NextPage = () => {
           const [generateDisputeId, sigState1] = checkIntegrity2(_state2, [_sig[0], _sig[1]], s1, stateTable[0].h1, gameId, otherPubKey, keyPair, stateTable)
 
           if (!generateDisputeId && !sigState1) {
-            // TODO multicall 
-            // open_dispute_state_2(generateDisputeId, gameId, prevStateHash, _s2, h1, [_sig[0], _sig[1]])
+            setOngoingDispute(true)
+            if(_starknet) {
+              var _account = _starknet?.account.address.slice(2)
+              var _sig_ = sign(keyPair, _account as string)
+              _starknet.account.execute({
+                contractAddress: gaslessContract.address.toLowerCase(),
+                entrypoint: 'open_dispute_state_2',
+                calldata: [generateDisputeId, gameId, prevStateHash, stateTable[0].h1, [_sig[0], _sig[1]]]
+              }).then((response: any) => {
+                response.player = player
+                setTransactions(response)
+
+                const timer = setTimeout(() => {
+                  var btnMsg = document.getElementById("sendDispute");
+                  if (btnMsg) {
+                    btnMsg.click()
+                    console.log('CLICKING Dispute state 2')
+                  }
+                }, 1000);
+              })
+            }
 
           } else {
             const [state3, sig] = makeState3(_state2, [_sig[0], _sig[1]], s1, stateTable[0].h1, gameId, otherPubKey, keyPair, stateTable)
@@ -477,15 +497,26 @@ const Play: NextPage = () => {
     var calls : any[] = [];
     var _account = _starknet?.account.address.slice(2)
     var _sig = sign(keyPair, _account as string)
+    console.log('sig', _sig)
     calls.push({
-        contractAddress: gaslessContract.address.toLowerCase(),
-        entrypoint: 'create_game',
-        calldata: [gameId, 10, getStarkKey(keyPair) as string, otherPubKey]
+      contractAddress: ethContract.address.toLowerCase(),
+      entrypoint: 'approve',
+      calldata: [gaslessContract.address, 500, 0]
+    });
+    calls.push({
+      contractAddress: gaslessContract.address.toLowerCase(),
+      entrypoint: 'deposit',
+      calldata: [500, 0]
     });
     calls.push({
         contractAddress: gaslessContract.address.toLowerCase(),
-        entrypoint: 'set_a_user',
-        calldata: [gameId, _sig]
+        entrypoint: 'create_game',
+        calldata: [gameId, 500, 0, getStarkKey(keyPair), otherPubKey]
+    });
+    calls.push({
+      contractAddress: gaslessContract.address.toLowerCase(),
+      entrypoint: 'set_a_user',
+      calldata: [gameId, _sig]
     });
     if(_starknet)
       _starknet.account.execute(calls).then((response: any) => {
@@ -499,11 +530,27 @@ const Play: NextPage = () => {
     if(_starknet) {
       var _account = _starknet?.account.address.slice(2)
       var _sig = sign(keyPair, _account as string)
-      _starknet.account.execute({
+      var calls : any[] = [];
+
+      calls.push({
+        contractAddress: ethContract.address.toLowerCase(),
+        entrypoint: 'approve',
+        calldata: [gaslessContract.address, 500, 0]
+      });
+      calls.push({
+        contractAddress: gaslessContract.address.toLowerCase(),
+        entrypoint: 'deposit',
+        calldata: [500, 0]
+      });
+      calls.push({
         contractAddress: gaslessContract.address.toLowerCase(),
         entrypoint: 'set_b_user',
         calldata: [gameId, _sig]
-      }).then((response: any) => {
+      });
+
+      //       - IERC20.approve(eth_contract, gll_contract, to_deposit);
+      // - GasLessLiar.set_b_user(gll_contract, game_id=1, sig=(signature_b_1, signature_b_2));
+      _starknet.account.execute(calls).then((response: any) => {
         response.player = player
         setTransactions(response)
       })
