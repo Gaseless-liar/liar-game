@@ -1,7 +1,7 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import Head from "next/head";
-import { StarknetConfig, InjectedConnector } from "@starknet-react/core";
+import { StarknetProvider, InjectedConnector } from "@starknet-react/core";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const connectors = [
@@ -11,14 +11,14 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <>
-      <StarknetConfig connectors={connectors}>
+      <StarknetProvider connectors={connectors}>
         <Head>
           <title>Gaseless Liar</title>
           <meta name="description" content="Gaseless Liar" />
           <link rel="icon" href="/ImperiumWarsLogo.png" />
         </Head>
         <Component {...pageProps} />
-      </StarknetConfig>
+      </StarknetProvider>
     </>
   );
 }

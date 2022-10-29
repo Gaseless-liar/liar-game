@@ -1,0 +1,313 @@
+[
+    {
+        "members": [
+            {
+                "name": "low",
+                "offset": 0,
+                "type": "felt"
+            },
+            {
+                "name": "high",
+                "offset": 1,
+                "type": "felt"
+            }
+        ],
+        "name": "Uint256",
+        "size": 2,
+        "type": "struct"
+    },
+    {
+        "members": [
+            {
+                "name": "entry_fee",
+                "offset": 0,
+                "type": "Uint256"
+            },
+            {
+                "name": "key_a",
+                "offset": 2,
+                "type": "felt"
+            },
+            {
+                "name": "key_b",
+                "offset": 3,
+                "type": "felt"
+            },
+            {
+                "name": "user_a",
+                "offset": 4,
+                "type": "felt"
+            },
+            {
+                "name": "user_b",
+                "offset": 5,
+                "type": "felt"
+            }
+        ],
+        "name": "GameData",
+        "size": 6,
+        "type": "struct"
+    },
+    {
+        "data": [
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "dispute",
+                "type": "felt"
+            }
+        ],
+        "keys": [],
+        "name": "dispute_opened",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "name": "amount",
+                "type": "Uint256"
+            }
+        ],
+        "name": "deposit",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "amount",
+                "type": "Uint256"
+            }
+        ],
+        "name": "withdraw",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "user",
+                "type": "felt"
+            }
+        ],
+        "name": "get_deposit",
+        "outputs": [
+            {
+                "name": "amount",
+                "type": "Uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "id",
+                "type": "felt"
+            },
+            {
+                "name": "entry_fee",
+                "type": "Uint256"
+            },
+            {
+                "name": "key_a",
+                "type": "felt"
+            },
+            {
+                "name": "key_b",
+                "type": "felt"
+            }
+        ],
+        "name": "create_game",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "set_a_user",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "set_b_user",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "game_id",
+                "type": "felt"
+            }
+        ],
+        "name": "get_game_data",
+        "outputs": [
+            {
+                "name": "game_data",
+                "type": "GameData"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "dispute",
+                "type": "felt"
+            },
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "h1",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "open_dispute_state_1",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "dispute",
+                "type": "felt"
+            },
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "prev_state_hash",
+                "type": "felt"
+            },
+            {
+                "name": "s2",
+                "type": "felt"
+            },
+            {
+                "name": "h1",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "close_dispute_state_1",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "dispute",
+                "type": "felt"
+            },
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "prev_state_hash",
+                "type": "felt"
+            },
+            {
+                "name": "s2",
+                "type": "felt"
+            },
+            {
+                "name": "h1",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "open_dispute_state_2",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "dispute",
+                "type": "felt"
+            },
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "prev_state_hash",
+                "type": "felt"
+            },
+            {
+                "name": "s1",
+                "type": "felt"
+            },
+            {
+                "name": "starting_card",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "close_dispute_state_2",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "dispute",
+                "type": "felt"
+            }
+        ],
+        "name": "close_dispute",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "token_addr",
+                "type": "felt"
+            }
+        ],
+        "name": "constructor",
+        "outputs": [],
+        "type": "constructor"
+    }
+]

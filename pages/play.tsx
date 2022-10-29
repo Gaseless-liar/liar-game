@@ -3,7 +3,7 @@ import { Modal } from "@mui/material";
 import type { NextPage } from "next";
 import Button from "../components/UI/button";
 import styles from "../styles/play.module.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { createLibp2p } from "libp2p";
 import { webSockets } from "@libp2p/websockets";
@@ -14,6 +14,10 @@ import { bootstrap } from "@libp2p/bootstrap";
 import { floodsub } from "@libp2p/floodsub";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { useGaslessLiarContract } from "../hooks/contracts";
+import { ec, getStarkKey } from "starknet/dist/utils/ellipticCurve";
+import { getStarknet, IStarknetWindowObject } from "get-starknet";
+import { GetBlockResponse } from "starknet";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -51,35 +55,35 @@ const Play: NextPage = () => {
     playerCards.push((rn1 + rn2) % 12);
   }
 
-  function depositCard(): void {
-    removeCard(cardToDeposit, playerCards);  
-    playerDepositedCards.push(cardToDeposit);
-    setLastAnnouncedCard(cardToAnnounce);
-    sendValue(cardToAnnounce);
-    sendValue(depositedHash); // est ce qu'on recalcule le hash ?
-    // change turn
-  }
+  // function depositCard(): void {
+  //   removeCard(cardToDeposit, playerCards);  
+  //   playerDepositedCards.push(cardToDeposit);
+  //   setLastAnnouncedCard(cardToAnnounce);
+  //   sendValue(cardToAnnounce);
+  //   sendValue(depositedHash); // est ce qu'on recalcule le hash ?
+  //   // change turn
+  // }
 
-  function tellThatHeIsLying(): void {
-    const revealed = accuseOpponent();
-    if (revealed >= lastAnnouncedCard) {
-        retrieveCards();
-    } else {
-        roundWon();
-        setLastAnnouncedCard(0);
-        playerDepositedCards = [];
-    }
-    // envoie de fraud proof si jamais pas de reponse
-  }
+  // function tellThatHeIsLying(): void {
+  //   const revealed = accuseOpponent();
+  //   if (revealed >= lastAnnouncedCard) {
+  //       retrieveCards();
+  //   } else {
+  //       roundWon();
+  //       setLastAnnouncedCard(0);
+  //       playerDepositedCards = [];
+  //   }
+  //   // envoie de fraud proof si jamais pas de reponse
+  // }
 
-  function retrieveCards(): void {
-    // demander opponentDepositedCards et vérifier que ces valeurs sont cohérentes avec les hashs de opponentDepositedCards
-    const opponentDepositedCardsValues = getValue();
-    verifyCardsIntegrity(opponentDepositedCardsValues, opponentDepositedCards);
-    playerCards.concat(opponentDepositedCards);
+  // function retrieveCards(): void {
+  //   // demander opponentDepositedCards et vérifier que ces valeurs sont cohérentes avec les hashs de opponentDepositedCards
+  //   const opponentDepositedCardsValues = getValue();
+  //   verifyCardsIntegrity(opponentDepositedCardsValues, opponentDepositedCards);
+  //   playerCards.concat(opponentDepositedCards);
     
-    // changer tour de jeu
-  }
+  //   // changer tour de jeu
+  // }
 
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
@@ -98,8 +102,82 @@ const Play: NextPage = () => {
   const [libp2p, setLibp2p] = useState<any>(null);
   const [roomId, setRoomId] = useState((router.query.room as string) ?? "");
   const [peerId, setPeerId] = useState((router.query.id as string) ?? "");
+  const [gameId, setGameId] = useState((router.query.gameId as any) ?? 0);
   const [otherPlayer, setOtherPlayer] = useState("");
   const [roomUri, setRoomUri] = useState("");
+  const [player, setPlayer] = useState(1);
+  const [keyPair, setKeyPair] = useState({})
+  const [otherPubKey, setOtherPubKey] = useState('')
+  const gaslessContract = useGaslessLiarContract();
+
+  // ----------- blocks, transactions -----------
+  const [transactions, setTransactions] = useState<any>(null)
+  const [_starknet, setStarknet] = useState<IStarknetWindowObject>()
+  const [block, setBlock] = useState<GetBlockResponse | undefined>(undefined);
+  const [loading, setLoading] = useState<boolean | undefined>(undefined);
+
+  const fetchBlock = useCallback(() => {
+    if (_starknet) {
+      _starknet.account
+        .getBlock()
+        .then((newBlock: any) => {
+          setBlock((oldBlock : any) => {
+            if (oldBlock?.block_hash === newBlock.block_hash) {
+              return oldBlock;
+            }
+            console.log('newBlock', newBlock)
+            newBlock.transactions.push({
+              transaction_hash: '111'
+            })
+            console.log('transactions', transactions)
+            if (transactions)
+              console.log('length', Object.keys(transactions).length)
+              
+            if (transactions && Object.keys(transactions).length > 0) {
+              transactions.map((ongoingTx: any) => {
+                console.log('ongoingTx', ongoingTx)
+                const tx = newBlock.transactions.filter((transaction: any) => {
+                  return transaction.transaction_hash == ongoingTx.transaction_hash;
+                });
+                if (tx.length > 0) {
+                  console.log('transaction was accepted', tx)
+                  tx.map((elem: any) => {
+                    if (elem.player == 1) {
+                      console.log('sending msg to P2')
+                      sendMessage('pubKey:'+ getStarkKey(keyPair))
+                    }
+                    else if (elem.player == 2) {
+                      setAreTransactionsPassed(true)
+                      sendMessage('ready')
+                    }
+                  })
+                }
+              })
+            }
+
+            return newBlock;
+          });
+        })
+        .catch((error: any) => {
+          console.log("failed fetching block", error);
+        })
+        .finally(() => setLoading(false));
+      }
+    }, [_starknet, block, transactions])
+
+
+  useEffect(() => {
+    setLoading(true);
+    // Fetch block immediately
+    fetchBlock();
+    const intervalId = setInterval(() => {
+      fetchBlock();
+    }, 10000);
+    return () => clearInterval(intervalId);
+  }, [fetchBlock]);
+
+
+    // ----------- END blocks, transactions -----------
 
   const joinGame = async (otherPlayerId: string) => {
     var bootstrapList = [
@@ -134,7 +212,15 @@ const Play: NextPage = () => {
     await libp2p.start();
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
+
+    const _starknet = await getStarknet();
+    await _starknet.enable({ showModal: true });
+    setStarknet(_starknet)
+
+    generateKey();
+    
     setIsInit(true);
+    setPlayer(2);
   };
 
   const initGame = async () => {
@@ -172,11 +258,22 @@ const Play: NextPage = () => {
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
 
+    const rand = Math.floor(Math.random() * 12);
+    setGameId(rand)
+
     var topic = "room_" + libp2p.peerId.toString();
+    console.log('roomId', topic)
     setRoomId(topic);
     setRoomUri(
-      `http://localhost:3000/play?id=${libp2p.peerId.toString()}&room=${topic}`
+      `http://localhost:3000/play?id=${libp2p.peerId.toString()}&room=${topic}&gameId=${rand}`
     );
+
+    generateKey();
+    const _starknet = await getStarknet();
+    await _starknet.enable({ showModal: true });
+    setStarknet(_starknet)
+
+    console.log('_starknet', _starknet)
 
     setIsInit(true);
   };
@@ -192,6 +289,7 @@ const Play: NextPage = () => {
     ) {
       setRoomId(router.query.room as string);
       setOtherPlayer(router.query.id as string);
+      setGameId(router.query.gameId as any)
       joinGame(router.query.id as string);
     }
   }, [roomId, peerId, router.query]);
@@ -226,23 +324,85 @@ const Play: NextPage = () => {
 
       libp2p.pubsub.subscribe(roomId);
       libp2p.pubsub.addEventListener("message", (evt: any) => {
-        console.log(
-          `node received: ${uint8ArrayToString(evt.detail.data)} on topic ${
-            evt.detail.topic
-          }`
-        );
-        console.log("event", evt);
+
+        var data = uint8ArrayToString(evt.detail.data)
+        console.log('message received', data)
+        var msg = data.split(',')
+        var msgType = msg[0].split(':')
+        console.log('msgType', msgType)
+
+        if (msgType[0] == 'pubKey') {
+            setOtherPubKey(msgType[1])
+            if(player == 1) startGame()
+            else startGameP2()
+        } else if (msgType[0] == 'ready') {
+          setAreTransactionsPassed(true)
+        }
+
+        // Messages : 
+        // player B a rejoint la partie on-chain > A calls create_state_1 & send return value to player B
+        // B calls create_state_2 & send return value to player A
       });
     }
-  }, [libp2p]);
+  }, [libp2p, isInit]);
 
-  const sendMessage = () => {
+  const sendMessage = (data: string) => {
+    console.log('sending msg', data)
     libp2p.pubsub
-      .publish(roomId, uint8ArrayFromString("Sending a test message!"))
+      .publish(roomId, uint8ArrayFromString(data))
       .catch((err: any) => {
         console.error(err);
       });
   };
+
+  const generateKey = () => {
+    var _key = ec.genKeyPair()
+    setKeyPair(_key)
+    return getStarkKey(_key)
+  }
+
+  const startGame = async () => {
+    // Send multicall 
+    // ! uncomment 
+    // var calls : any[] = [];
+    // calls.push({
+    //     contractAddress: gaslessContract.address.toLowerCase(),
+    //     entrypoint: 'create_game',
+    //     calldata: [gameId, 10, getStarkKey(keyPair) as string, otherPubKey]
+    // });
+    // calls.push({
+    //     contractAddress: gaslessContract.address.toLowerCase(),
+    //     entrypoint: 'set_a_user',
+    //     calldata: [gameId, 'sig(felt, felt']
+    // });
+    // if(_starknet)
+    //   _starknet.account.execute(calls).then((response: any) => {
+    //     response.player = player
+    //     setTransactions(response)
+    //   })
+
+      var tx = []
+      const response = {
+        code: 'TX_RECEIVED',
+        transaction_hash : "111",
+        player: player
+      }
+      tx.push(response)
+      setTransactions(tx)
+  }
+
+  const startGameP2 = async () => {
+    // Send multicall 
+    if(_starknet)
+      _starknet.account.execute({
+        contractAddress: gaslessContract.address.toLowerCase(),
+        entrypoint: 'set_a_user',
+        calldata: [gameId, 'sig(felt, felt']
+      }).then((response: any) => {
+        response.player = player
+        setTransactions(response)
+      })
+  }
 
   // -------------- END libP2P management -------------------------
 
@@ -396,7 +556,7 @@ const Play: NextPage = () => {
               >
                 Launch your game onchain
               </Button>
-            ) : (
+            ) : player == 1 ? (
               <>
                 <h1>We&apos;re waiting for you&apos;re opponent</h1>
                 <Button
@@ -406,6 +566,18 @@ const Play: NextPage = () => {
                   size="small"
                 >
                   Click to Copy game url
+                </Button>
+              </>
+            ) : (
+              <>
+                <h1>We&apos;re initializing the game</h1>
+                <Button
+                  onClick={() => {
+                    sendMessage('pubKey:'+ getStarkKey(keyPair))
+                  }}
+                  size="small"
+                >
+                  Connect to player 1
                 </Button>
               </>
             )}

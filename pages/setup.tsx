@@ -11,6 +11,10 @@ import { bootstrap } from "@libp2p/bootstrap";
 import { floodsub } from "@libp2p/floodsub";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { ec } from "starknet";
+import { useGaslessLiarContract } from "../hooks/contracts";
+import { getStarkKey } from "starknet/dist/utils/ellipticCurve";
+
 
 const Setup: NextPage = () => {
   const router = useRouter();
@@ -21,6 +25,14 @@ const Setup: NextPage = () => {
   const [peerId, setPeerId] = useState((router.query.id as string) ?? "");
   const [otherPlayer, setOtherPlayer] = useState("");
   const [roomUri, setRoomUri] = useState("");
+
+  const [gameId, setGameId] = useState((router.query.gameId as any) ?? 0);
+
+  //   Added
+  const [player, setPlayer] = useState(1);
+  const [keyPair, setKeyPair] = useState({})
+  const [otherPubKey, setOtherPubKey] = useState('')
+  const gaslessContract = useGaslessLiarContract();
 
   const joinGame = async (otherPlayerId: string) => {
     var bootstrapList = [
@@ -52,10 +64,18 @@ const Setup: NextPage = () => {
     });
 
     console.log("libp2p", libp2p);
+
     await libp2p.start();
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
     setIsInit(true);
+
+    var key_b = generateKey();
+    console.log('key_b', key_b)
+
+    setTimeout(function() {
+        setPlayer(2);
+    }, 2000);
   };
 
   const initGame = async () => {
@@ -93,11 +113,16 @@ const Setup: NextPage = () => {
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
 
+    const rand = Math.floor(Math.random() * 12);
+    setGameId(rand)
+
     var topic = "room_" + libp2p.peerId.toString();
     setRoomId(topic);
     setRoomUri(
-      `http://localhost:3000/setup?id=${libp2p.peerId.toString()}&room=${topic}`
+      `http://localhost:3000/setup?id=${libp2p.peerId.toString()}&room=${topic}&gameId=${rand}`
     );
+
+    generateKey();
 
     setIsInit(true);
   };
@@ -113,6 +138,7 @@ const Setup: NextPage = () => {
     ) {
       setRoomId(router.query.room as string);
       setOtherPlayer(router.query.id as string);
+      setGameId(router.query.gameId as any)
       joinGame(router.query.id as string);
     }
   }, [roomId, peerId, router.query]);
@@ -147,23 +173,58 @@ const Setup: NextPage = () => {
 
       libp2p.pubsub.subscribe(roomId);
       libp2p.pubsub.addEventListener("message", (evt: any) => {
-        console.log(
-          `node received: ${uint8ArrayToString(evt.detail.data)} on topic ${
-            evt.detail.topic
-          }`
-        );
+        var data = uint8ArrayToString(evt.detail.data)
+        console.log('data', data)
+        var msg = data.split(',')
+        var msgType = msg[0].split(':')
+        if (msgType[0] == 'pubKey') {
+            setOtherPubKey(msgType[1])
+            if (player == 1) {
+                // Send public key to player B
+
+                // Send multicall 
+                var calls : any[] = [];
+                calls.push({
+                    contractAddress: gaslessContract.address.toLowerCase(),
+                    entrypoint: 'create_game',
+                    calldata: [gameId, 10, getStarkKey(keyPair) as string, msgType[1]]
+                });
+
+                // game_id, sig(felt, felt) > via function 
+                calls.push({
+                    contractAddress: gaslessContract.address.toLowerCase(),
+                    entrypoint: 'create_game',
+                    calldata: [gameId, 10, getStarkKey(keyPair) as string, msgType[1]]
+                });
+
+                sendMessage('pubKey:'+ getStarkKey(keyPair));
+            }
+        }
+        
+        console.log('msg received', msg);
+        // console.log(
+        //   `node received: ${uint8ArrayToString(evt.detail.data)} on topic ${
+        //     evt.detail.topic
+        //   }`
+        // );
         console.log("event", evt);
       });
     }
   }, [libp2p]);
 
-  const sendMessage = () => {
+  const sendMessage = (data: string) => {
     libp2p.pubsub
-      .publish(roomId, uint8ArrayFromString("Sending a test message!"))
+      .publish(roomId, uint8ArrayFromString(data))
       .catch((err: any) => {
         console.error(err);
       });
   };
+
+  const generateKey = () => {
+    var _key = ec.genKeyPair()
+    setKeyPair(_key)
+    return getStarkKey(_key)
+  }
 
   return (
     <>
@@ -174,7 +235,12 @@ const Setup: NextPage = () => {
           <p>Room Id : {roomId}</p>
           <p>Link to share: {roomUri}</p>
 
-          <button onClick={() => sendMessage()}>Send Message</button>
+          <button onClick={() => sendMessage('test')}>Send Message</button>
+          <button onClick={() => generateKey()}>Generate key</button>
+
+          {player == 2 ? 
+            <button onClick={() => sendMessage('pubKey:'+ getStarkKey(keyPair))}>Connect to player 1</button>
+        : <></>}
         </>
       )}
     </>
