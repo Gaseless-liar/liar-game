@@ -64,16 +64,11 @@ const Setup: NextPage = () => {
       ],
     });
 
-    console.log("libp2p", libp2p);
-
     await libp2p.start();
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
     setIsInit(true);
-
     var key_b = generateKey();
-    console.log('key_b', key_b)
-
     setTimeout(function() {
         setPlayer(2);
     }, 2000);
@@ -109,23 +104,17 @@ const Setup: NextPage = () => {
         }),
       ],
     });
-
-    console.log("libp2p", libp2p);
     await libp2p.start();
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
-
     const rand = Math.floor(Math.random() * 12);
     setGameId(rand)
-
     var topic = "room_" + libp2p.peerId.toString();
     setRoomId(topic);
     setRoomUri(
       `http://localhost:3000/setup?id=${libp2p.peerId.toString()}&room=${topic}&gameId=${rand}`
     );
-
     generateKey();
-
     setIsInit(true);
   };
 
@@ -149,9 +138,7 @@ const Setup: NextPage = () => {
     if (libp2p && isInit) {
       // Listen for new peers
       libp2p.addEventListener("peer:discovery", (evt: any) => {
-        const peer = evt.detail;
-        // console.log(`Found peer ${peer.id.toString()}`)
-
+        // const peer = evt.detail;
         // dial them when we discover them
         libp2p.dial(evt.detail.id).catch((err: any) => {
           // console.log(`Could not dial ${evt.detail.id}`, err)
@@ -160,7 +147,7 @@ const Setup: NextPage = () => {
 
       // Listen for new connections to peers
       libp2p.connectionManager.addEventListener("peer:connect", (evt: any) => {
-        const connection = evt.detail;
+        // const connection = evt.detail;
         // console.log(`Connected to ${connection.remotePeer.toString()}`)
       });
 
@@ -184,7 +171,6 @@ const Setup: NextPage = () => {
             if (player == 1) {
                 // Send public key to player B
 
-                // Send multicall 
                 var calls : any[] = [];
                 calls.push({
                     contractAddress: gaslessContract.address.toLowerCase(),

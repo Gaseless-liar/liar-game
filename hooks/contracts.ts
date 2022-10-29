@@ -1,8 +1,12 @@
 import gasless_liar_abi from "../abi/GasLessLiar.json";
+import erc20_abi from "../abi/erc20_abi.json";
 import { Abi, Contract } from "starknet";
 
 export const gaslessLiarContract: string =
-  "0x00cf192bbe0edff598fe8ab801dc36cd656d3c140f0aa68cd56c167d506b1cb3";
+  "0x01d3c0f481a1adacdf251d9af2710ea119e0facde4dfd8b6269bb8ef7c6889e5";
+
+export const ethereumContract: string =
+  "0x049D36570D4e46f48e99674bd3fcc84644DdD6b96F7C741B1562B82f9e004dC7";
 
 export function useGaslessLiarContract() {
     const gaslessGame = new Contract(
@@ -10,5 +14,13 @@ export function useGaslessLiarContract() {
         gaslessLiarContract
       );
     return gaslessGame
+}
+
+export function useEthereumContract() {
+    const erc20 = new Contract(
+        erc20_abi as Abi,
+        ethereumContract
+      );
+    return erc20
 }
   
