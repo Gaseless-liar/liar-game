@@ -1,5 +1,5 @@
 import { BigNumberish } from 'starknet/dist/utils/number';
-import { Signature } from 'starknet/types';
+import { KeyPair, Signature } from 'starknet/types';
 import { sign, verify, getKeyPairFromPublicKey, getKeyPair } from 'starknet/utils/ellipticCurve'
 
 export function verifyIntegrity(toCompare: [any, any][]): boolean {
@@ -18,9 +18,8 @@ export function verifySig(sig: Signature, pubKey: BigNumberish, hash: string): b
     return true;
 }
 
-export function signH(privKey: BigNumberish, hash: string): Signature {
-    const keyPair = getKeyPair(privKey);
-    return sign(keyPair, hash);
+export function signH(keyPair: KeyPair, hash: string): Signature {
+    return sign(keyPair, hash.slice(2));
 }
 
 
