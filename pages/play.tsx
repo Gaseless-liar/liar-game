@@ -6,15 +6,59 @@ import Button from "../components/UI/button";
 import styles from "../styles/play.module.css";
 
 const Play: NextPage = () => {
-  const isYourTurn = true;
-  const playerCards: number[] = [1, 12, 4, 7, 11];
-  const cards: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  //Front end Data
+  const allCards: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   const [modalCardToTell, setModalCardToTell] = useState<boolean>(false);
   const [cardToDeposit, setCardToDeposit] = useState<undefined | number>();
   const [cardToAnnounce, setCardToAnnounce] = useState<any>({
     index: 0,
     card: 0,
   });
+
+  // Data needed for the game
+  const [isYourTurn, setIsYourTurn] = useState<boolean>(false);
+  const playerCards: number[] = [];
+  const playerDepositedCards: number[] = [];
+  const opponentDepositedCards: string[] = [];
+  const [lastAnnouncedCard, setLastAnnouncedCard] = useState<
+    number | undefined
+  >();
+  const [shouldSendFraudProof, setShouldSendFraudProof] =
+    useState<boolean>(false);
+
+  function draw(): void {
+    // générer un nb alétoire
+    // reveal le hash et demander à l'adversaire de générer un nb alétoire
+    // recevoir le nb alétoire de l'adversaire
+    // playerCards.push(s1 + s2 modulo 12)
+  }
+
+  function depositCard(): void {
+    // enlever cardToDeposit de playerCards
+    // ajouter cardToDeposit à playerDepositedCards
+    // prendre cardToAnnounce et setLastAnnouncedCard()
+    // envoyer cardToAnnounce et hash de la card déposée
+    // changer tour de jeu
+  }
+
+  function tellThatHeIsLying(): void {
+    // Envoie au deuxième joueur qu'il ment
+    // if (Reveal la card == perdu ) {
+    // retrieveCards()
+    // } else if (Reveal la card == perdu) {
+    // affichage que j'ai gagné
+    // setLastAnnouncedCard(0)
+    // playerDepositedCards = [];
+    // }
+    // - ou envoie de fraud proof
+  }
+
+  function retrieveCards(): void {
+    // demander opponentDepositedCards et vérifier que ces valeurs sont cohérentes avec les hashs de opponentDepositedCards
+    // si différent setShouldSendFraudProof(true)
+    // ajouter les opponentDepositedCards à playerCards
+    // changer tour de jeu
+  }
 
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
@@ -114,7 +158,7 @@ const Play: NextPage = () => {
             </div>
             <div className={styles.depositCard}>
               <div className={styles.announcedCard}>
-                {cards.map((card, index) => {
+                {allCards.map((card, index) => {
                   return (
                     <img
                       key={index}
