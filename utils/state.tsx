@@ -4,7 +4,10 @@ import { BigNumberish } from 'starknet/utils/number';
 import { randomGenerator, hash, randomAndHash } from './utils';
 import { signH, verifyIntegrity, verifySig } from './verification';
 
-const stateTable:object[] = [];
+const stateTable:any[] = [];
+
+//renvoie message au front
+//+ info  + disputeID
 
 export function makeState1(gameId: number, privKeyA: string): [any, Signature] {
     const [s1, h1] = randomAndHash();
@@ -20,7 +23,9 @@ export function makeState1(gameId: number, privKeyA: string): [any, Signature] {
 }
 
 export function makeState2(state1: any, sigState1: Signature, gameId: number, oldH1: string, pubKeyA: BigNumberish, privKeyB: BigNumberish): [any, Signature]  {
-    verifyIntegrity([[state1.gameId, gameId], [state1.type, 1], [oldH1, state1.h1]]);
+    if (!verifyIntegrity([[state1.gameId, gameId], [state1.type, 1], [oldH1, state1.h1]])) {
+
+    }
     const state1Hashed = computeHashOnElements([state1.gameId, state1.h1, state1.type]);
     verifySig(sigState1, pubKeyA, state1Hashed);
     const s2 = randomGenerator();
