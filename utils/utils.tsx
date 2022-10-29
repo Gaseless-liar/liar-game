@@ -12,3 +12,7 @@ export function randomAndHash(): [number, string] {
 export function hash(x: number): string {
     return pedersen([x, 0]);
 }
+
+export function generateDisputeId() {
+    return Math.floor(Math.random()*9999999999);
+}

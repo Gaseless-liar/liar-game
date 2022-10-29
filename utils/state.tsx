@@ -1,10 +1,10 @@
 import { KeyPair, Signature } from 'starknet';
 import { computeHashOnElements, pedersen } from 'starknet/utils/hash';
 import { BigNumberish } from 'starknet/utils/number';
-import { randomGenerator, hash, randomAndHash } from './utils';
+import { randomGenerator, hash, randomAndHash, generateDisputeId } from './utils';
 import { signH, verifyIntegrity, verifySig } from './verification';
 
-export function makeState1(gameId: number, keyPairA: KeyPair, stateTable:any[]): [any, Signature, any, any] {
+export function makeState1(gameId: number, keyPairA: KeyPair, stateTable:any[]): [any, Signature, number, any] {
     const [s1, h1] = randomAndHash();
     const state1 = {
         'gameId' : gameId,
@@ -18,16 +18,23 @@ export function makeState1(gameId: number, keyPairA: KeyPair, stateTable:any[]):
 }
 //call open_dispute_state_1 with disputeId gameId, h1 and sig
 
+export function checkIntegrity (
+    state1: any, sigState1: Signature, gameId: number, pubKeyA: BigNumberish, keyPairB: KeyPair, stateTable:any[]
+) {
+    const state1Hashed = computeHashOnElements([state1.gameId, state1.h1, state1.type]);
+    if (!(verifyIntegrity([[state1.gameId, gameId], [state1.type, 1]]) || verifySig(sigState1, pubKeyA, state1Hashed))) {
+        return [generateDisputeId(), sigState1];
+    }
+    return [0, 0]
+}
+
 export function makeState2(
         state1: any, sigState1: Signature, gameId: number, pubKeyA: BigNumberish, keyPairB: KeyPair, stateTable:any[]
-    ): [any, Signature]  {
-    if (!verifyIntegrity([[state1.gameId, gameId], [state1.type, 1]])) {
-        //generate disputeId
-        //renvoie message au front
-        //fait remonter disputeId gameId, h1 and sig
-    }
+    ) {
     const state1Hashed = computeHashOnElements([state1.gameId, state1.h1, state1.type]);
-    verifySig(sigState1, pubKeyA, state1Hashed);
+    // if (!(verifyIntegrity([[state1.gameId, gameId], [state1.type, 1]]) || verifySig(sigState1, pubKeyA, state1Hashed))) {
+    //     return [generateDisputeId(), gameId, state1.h1, sigState1];
+    // }
     const s2 = randomGenerator();
     const state2 = {
        'gameId' : gameId,
@@ -42,12 +49,23 @@ export function makeState2(
     return [state2, sig];
 }
 
+export function checkIntegrity2 (
+    state2: any, sigState2: Signature, gameId: number, s1: any, oldH1: string, pubKeyB: BigNumberish, keyPairA: KeyPair, stateTable:any[]
+) {
+    const state2Hashed = computeHashOnElements([state2.gameId, state2.prevStateHash, state2.s2, state2.h1, state2.type]);
+    if (!(verifyIntegrity([[state2.gameId, gameId], [state2.type, 2], [oldH1, state2.h1], [hash(s1), state2.h1]]) || verifySig(sigState2, pubKeyB, state2Hashed))) {
+        return [generateDisputeId(), gameId, state2Hashed, state2.s2, oldH1, sigState2]; // attention prev Sig a rajouter !
+    }
+    return [0, 0]
+}
+
 export function makeState3(
         state2: any, sigState2: Signature, gameId: number, s1: any, oldH1: string, pubKeyB: BigNumberish, keyPairA: KeyPair, stateTable:any[]
-    ): [any, Signature] {
-    verifyIntegrity([[state2.gameId, gameId], [state2.type, 2], [oldH1, state2.h1], [hash(s1), state2.h1]]);
+    ) {
     const state2Hashed = computeHashOnElements([state2.gameId, state2.prevStateHash, state2.s2, state2.h1, state2.type]);
-    verifySig(sigState2, pubKeyB, state2Hashed);
+    //     if (!(verifyIntegrity([[state2.gameId, gameId], [state2.type, 2], [oldH1, state2.h1], [hash(s1), state2.h1]]) || verifySig(sigState2, pubKeyB, state2Hashed))) {
+    //         return [generateDisputeId(), gameId, state2Hashed, state2.s2, oldH1, sigState2]; // attention prev Sig a rajouter !
+    // }
     const startingCard = pedersen([s1, state2.s2]);
     const state3 = {
         'gameId': gameId,
