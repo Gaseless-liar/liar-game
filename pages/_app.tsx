@@ -15,7 +15,6 @@ function MyApp({ Component, pageProps }: AppProps) {
         <Head>
           <title>Gaseless Liar</title>
           <meta name="description" content="Gaseless Liar" />
-          <link rel="icon" href="/ImperiumWarsLogo.png" />
         </Head>
         <Component {...pageProps} />
       </StarknetProvider>
