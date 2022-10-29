@@ -516,7 +516,7 @@ const Play: NextPage = () => {
     calls.push({
       contractAddress: gaslessContract.address.toLowerCase(),
       entrypoint: 'set_a_user',
-      calldata: [gameId, _sig]
+      calldata: [gameId, _sig[0], _sig[1]]
     });
     if(_starknet)
       _starknet.account.execute(calls).then((response: any) => {
