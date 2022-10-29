@@ -1,3 +1,4 @@
+import { pedersen } from 'starknet.js'
 import { randomInt } from 'math.js'
 import BN from "bn.js"
 
@@ -5,4 +6,9 @@ const P = new BN("80000000000001100000000000000000000000000000000000000000000000
 
 function randomGenerator() {
     return randomInt(P);
+}
+
+function randomAndHash() {
+    const s = randomGenerator();
+    return [s, pedersen(s, 0)];
 }
