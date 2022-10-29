@@ -1,0 +1,161 @@
+.territory {
+  font-family: "Poker";
+  flex-direction: column;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 300px;
+  height: 610px;
+  margin-right: 1rem;
+  flex-direction: column;
+  box-shadow: 0px 0px 32px 1px #140b057e;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  padding: 10px 30px;
+  border-style: solid;
+  border-image: linear-gradient(to bottom, #c8aa6d, #7a5c29);
+  border-image-slice: 1;
+  border-width: 2px;
+  position: relative;
+}
+
+.blackFilter {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #000000;
+  width: 100%;
+  height: 100%;
+  opacity: 0.7;
+}
+
+.countryName {
+  text-align: center;
+  color: blanchedalmond;
+}
+
+.territoryContainer {
+  z-index: 0;
+  overflow: auto;
+  font-size: large;
+}
+
+.territoryContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.territoryContent {
+  z-index: 0;
+  color: var(--beige);
+  text-align: justify;
+}
+
+.avatarWithCadre {
+  position: relative;
+}
+
+.territoryModal {
+  position: absolute;
+  align-self: center;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 45px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  box-shadow: 0px 0px 32px 1px hsla(24, 60%, 5%, 0.494);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  padding: 10px 30px;
+  border-style: solid;
+  border-image: linear-gradient(to bottom, #c8aa6d, #7a5c29);
+  border-image-slice: 1;
+  border-width: 2px;
+  background-color: #1e2328;
+  font-family: "Poker";
+  width: 700px;
+}
+
+.territoryModalClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  stroke: var(--beige);
+  cursor: url("../public/cursors/cursorPointer.png"), pointer;
+  transition: 0.3s;
+  background-color: transparent;
+  border: none;
+}
+
+.territoryModalClose:hover {
+  stroke: #c8aa6dc1;
+}
+
+.mobileTerritoryContainer {
+  display: flex;
+  align-items: center;
+}
+
+.mobileTerritoryImages {
+  position: relative;
+  width: 600px;
+  text-align: center;
+}
+
+.mobileTerritoryCadre {
+  position: absolute;
+  top: -10px;
+  left: 32px;
+}
+
+.mobileTerritoryImage {
+  margin: 5px;
+  margin-bottom: 10px;
+}
+
+.mobileTerritoryContent {
+  font-size: small;
+  max-width: 50%;
+}
+
+@media (max-width: 700px) {
+  .mobileTerritoryContainer {
+    flex-direction: column;
+    max-height: 600px;
+  }
+
+  .territoryModal {
+    max-width: 370px;
+  }
+
+  .mobileTerritoryCadre {
+    top: -10px;
+    left: 165px;
+  }
+}
+
+@media (max-width: 1350px) and (min-width: 1024px) {
+  .territory {
+    width: 250px;
+    height: 400px;
+  }
+
+  .territoryContainer {
+    z-index: 0;
+    overflow: auto;
+    font-size: small;
+  }
+}
+
+@media (min-width: 2048px) {
+  .territory {
+    width: 467px;
+    height: 950px;
+  }
+}

@@ -1,0 +1,90 @@
+.mapPage {
+  background-image: url("/backgrounds/woodBackground.webp");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+}
+
+.cadreMap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("/cadreMap.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+.mapContainer {
+  z-index: 0;
+}
+
+.svg {
+  background-image: url("/backgrounds/oldPaperBackground.webp");
+  width: 1094.94px;
+  height: 615.6px;
+}
+
+.map {
+  transform: scale(28.5%);
+}
+
+.screenRotationIcon {
+  width: 5rem;
+  height: 5rem;
+}
+
+/* Phone */
+@media (max-width: 1025px) {
+  .svg {
+    width: 576px;
+    height: 324px;
+  }
+
+  .map {
+    transform: scale(15%);
+  }
+}
+
+/* Big phone and tablet */
+@media (max-width: 1350px) and (min-width: 1025px) {
+  .mapPage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .svg {
+    width: 720px;
+    height: 405px;
+  }
+
+  .map {
+    transform: scale(18.75%);
+  }
+}
+
+/* Big screen */
+@media (min-width: 2048px) {
+  .mapContainer {
+    width: 1728px;
+    height: 972px;
+  }
+
+  .svg {
+    width: 1728px;
+    height: 972px;
+  }
+
+  .map {
+    transform: scale(45%);
+  }
+}

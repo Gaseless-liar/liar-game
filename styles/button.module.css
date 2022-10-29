@@ -1,0 +1,36 @@
+.buttonSmall,
+.buttonLarge {
+  font-family: "Poker";
+  font-size: 2.5rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  padding: 10px 30px;
+  color: gold;
+  background: rgb(0, 46, 0);
+  box-shadow: inset 0 0 2px #000000;
+  border-image: linear-gradient(to bottom, gold, #7a5c29);
+  border-image-slice: 1;
+  border-width: 2px;
+  z-index: 0;
+  text-align: center;
+}
+
+.buttonSmall:hover,
+.buttonLarge:hover {
+  text-shadow: 0 0 5px gold;
+  cursor: url("../public/cursors/cursorPointer.png"), pointer;
+  transition: 0.1s;
+}
+
+.buttonSmall:active,
+.buttonLarge:active {
+  cursor: url("../public/cursors/cursorPointer.png"), pointer;
+  text-shadow: none;
+  box-shadow: none;
+  color: rgb(131, 112, 5);
+}
+
+.buttonSmall {
+  font-size: 1.5rem;
+  margin: 0.5rem;
+}

@@ -1,0 +1,40 @@
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.musicPlayerOn,
+.musicPlayerOff {
+  display: flex;
+  align-items: center;
+  background-color: blanchedalmond;
+  position: fixed;
+  max-width: fit-content;
+  right: 2rem;
+  bottom: 2rem;
+  padding: 0.75rem;
+  background: #1e2328;
+  border-style: solid;
+  border-image: linear-gradient(to bottom, #c8aa6d, #7a5c29);
+  border-image-slice: 1;
+  border-width: 2px;
+  box-shadow: inset 0 0 2px #000000;
+  height: 3rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.musicPlayerOn {
+  border-style: solid;
+  border-image: linear-gradient(to bottom, #ead7b0, #9f8b6a);
+  border-image-slice: 1;
+  border-width: 2px;
+}
+
+.musicTitle {
+  color: #c8aa6d;
+  margin-right: 1rem;
+}

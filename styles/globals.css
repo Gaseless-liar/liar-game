@@ -1,0 +1,160 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: "Poker";
+  cursor: url("../public/cursors/cursorPointer.png"), pointer;
+}
+
+:root {
+  --blackRed: #840101;
+  --white: #ffffff;
+  --red: #ff1616;
+  --black: #000000;
+  --beige: #c8aa6d;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@font-face {
+  font-family: "Poker";
+  src: url(../public/fonts/PokerFont.otf);
+}
+
+.centerContainer {
+  display: flex;
+  text-align: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+p {
+  color: var(--beige);
+}
+
+#info {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  color: blanchedalmond;
+}
+
+/* Map */
+.str3 {
+  stroke-width: 2.36;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.str3::hover {
+  stroke-width: 3.36;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.str0,
+.str1,
+.str2,
+.str3,
+.str5 {
+  stroke: #331907;
+  stroke-miterlimit: 22.9256;
+}
+.str2 {
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.str0,
+.str1,
+.str5 {
+  stroke-width: 6.25;
+  stroke-dasharray: 6.25 6.25;
+}
+.str1,
+.str5 {
+  stroke-linejoin: round;
+}
+.fil0 {
+  fill: none;
+}
+.fil2 {
+  fill: #331907;
+}
+
+.fil3 {
+  fill: #331907;
+  fill-rule: nonzero;
+}
+
+.NorthAmerica {
+  fill: rgba(184, 135, 11, 0.57);
+}
+.NorthAmerica:hover {
+  fill: rgba(184, 135, 11, 0.83);
+}
+
+.Europe {
+  fill: #274f876e;
+}
+.Europe:hover {
+  fill: #1d3e6cc4;
+}
+
+.SouthAmerica {
+  fill: rgba(189, 108, 10, 0.48);
+}
+.SouthAmerica:hover {
+  fill: rgba(189, 108, 10, 0.89);
+}
+
+.Africa {
+  fill: rgba(137, 49, 1, 0.629);
+}
+.Africa:hover {
+  fill: rgba(137, 49, 1, 0.805);
+}
+
+.Asia {
+  fill: rgba(15, 110, 2, 0.549);
+}
+.Asia:hover {
+  fill: rgba(15, 110, 2, 0.787);
+}
+
+.Oceania {
+  fill: rgba(110, 2, 88, 0.549);
+}
+.Oceania:hover {
+  fill: rgba(110, 2, 88, 0.814);
+}
+
+.map {
+  shape-rendering: "geometricPrecision";
+  text-rendering: "geometricPrecision";
+  fill-rule: "evenodd";
+  clip-rule: "evenodd";
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    color: white;
+    background: rgb(255, 255, 255);
+  }
+}
