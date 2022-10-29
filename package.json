@@ -9,15 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@chainsafe/libp2p-noise": "^9.0.0",
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
+    "@libp2p/bootstrap": "^5.0.0",
+    "@libp2p/floodsub": "^5.0.0",
+    "@libp2p/mplex": "^7.0.0",
+    "@libp2p/webrtc-star": "^5.0.3",
+    "@libp2p/websockets": "^5.0.0",
     "@mui/icons-material": "^5.10.6",
     "@mui/material": "^5.10.6",
     "@starknet-react/core": "^0.14.0",
+    "libp2p": "^0.40.0",
     "next": "12.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "starknet": "^4.9.0"
+    "starknet": "^4.9.0",
+    "uint8arrays": "^4.0.2"
   },
   "devDependencies": {
     "@types/node": "18.7.3",
