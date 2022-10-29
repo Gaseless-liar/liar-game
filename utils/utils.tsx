@@ -1,5 +1,5 @@
-import { pedersen } from 'starknet.js';
-import { randomInt } from 'math.js';
+import { pedersen } from "starknet/dist/utils/hash";
+import { randomInt } from "math/";
 import BN from "bignumber.js";
 
 const P = new BN("800000000000011000000000000000000000000000000000000000000000001", 16);
@@ -10,5 +10,9 @@ export function randomGenerator(): number {
 
 export function randomAndHash(): [number, string] {
     const s = randomGenerator();
-    return [s, pedersen(s, 0)];
+    return [s, pedersen([s, new BN(0)])];
+}
+
+export function hash(x: number) {
+    return pedersen([x, new BN(0)]);
 }
