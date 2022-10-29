@@ -19,9 +19,9 @@ export function makeState1(gameId: number, keyPairA: KeyPair, stateTable:any[]):
 //call open_dispute_state_1 with disputeId gameId, h1 and sig
 
 export function makeState2(
-        state1: any, sigState1: Signature, gameId: number, oldH1: string, pubKeyA: BigNumberish, keyPairB: KeyPair, stateTable:any[]
+        state1: any, sigState1: Signature, gameId: number, pubKeyA: BigNumberish, keyPairB: KeyPair, stateTable:any[]
     ): [any, Signature]  {
-    if (!verifyIntegrity([[state1.gameId, gameId], [state1.type, 1], [oldH1, state1.h1]])) {
+    if (!verifyIntegrity([[state1.gameId, gameId], [state1.type, 1]])) {
         //generate disputeId
         //renvoie message au front
         //fait remonter disputeId gameId, h1 and sig
@@ -29,7 +29,7 @@ export function makeState2(
     const state1Hashed = computeHashOnElements([state1.gameId, state1.h1, state1.type]);
     verifySig(sigState1, pubKeyA, state1Hashed);
     const s2 = randomGenerator();
-    const state2:any = {
+    const state2 = {
        'gameId' : gameId,
        'prevStateHash' : state1Hashed,
        's2' : s2,
@@ -43,12 +43,12 @@ export function makeState2(
 }
 
 export function makeState3(
-        state2: any, sigState2: Signature, gameId: number, s1: any, oldS2: any, pubKeyB: BigNumberish, keyPairA: KeyPair, stateTable:any[]
+        state2: any, sigState2: Signature, gameId: number, s1: any, oldH1: string, pubKeyB: BigNumberish, keyPairA: KeyPair, stateTable:any[]
     ): [any, Signature] {
-    verifyIntegrity([[state2.gameId, gameId], [state2.type, 2], [hash(s1), state2.h1]]);
+    verifyIntegrity([[state2.gameId, gameId], [state2.type, 2], [oldH1, state2.h1], [hash(s1), state2.h1]]);
     const state2Hashed = computeHashOnElements([state2.gameId, state2.prevStateHash, state2.s2, state2.h1, state2.type]);
     verifySig(sigState2, pubKeyB, state2Hashed);
-    const startingCard = pedersen([s1, oldS2]);
+    const startingCard = pedersen([s1, state2.s2]);
     const state3 = {
         'gameId': gameId,
         'prevStateHash': state2Hashed,
@@ -56,7 +56,7 @@ export function makeState3(
         'startingCard': startingCard,
         'type': 3
     };
-    const stateHash = computeHashOnElements([]);
+    const stateHash = computeHashOnElements([state3.gameId, state3.prevStateHash, state3.s1, state3.startingCard, state3.type]);
     const sig = signH(keyPairA, stateHash);
     stateTable.push(state3);
     return [state3, sig];
