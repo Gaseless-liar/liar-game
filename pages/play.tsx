@@ -24,6 +24,8 @@ const Play: NextPage = () => {
     index: 0,
     card: 0,
   });
+  const [isOnChainCreationAvailable, setIsOnChainCreationAvailable] =
+    useState<boolean>(false);
 
   // Data needed for the game
   const [isYourTurn, setIsYourTurn] = useState<boolean>(false);
@@ -35,6 +37,7 @@ const Play: NextPage = () => {
   >();
   const [shouldSendFraudProof, setShouldSendFraudProof] =
     useState<boolean>(false);
+  const [areTransactionsPassed, setAreTransactionsPassed] = useState(false);
 
   function draw(): void {
     // générer un nb alétoire
@@ -243,151 +246,170 @@ const Play: NextPage = () => {
   return (
     <div className={styles.playContainer}>
       {libp2p && peerId ? (
-        <>
-          <div className={styles.cards}>
-            <div style={{ display: "flex" }}>
-              <div className={styles.deck}>
-                <img
-                  className={styles.deckCard1}
-                  src="/cards/cardBack.svg"
-                  width={150}
-                  alt="card back"
-                />
-                <img
-                  className={styles.deckCard2}
-                  src="/cards/cardBack.svg"
-                  width={150}
-                  alt="card back"
-                />
-                <img
-                  className={styles.deckCard3}
-                  src="/cards/cardBack.svg"
-                  width={150}
-                  alt="card back"
-                />
-                <img
-                  className={styles.deckCard4}
-                  src="/cards/cardBack.svg"
-                  width={150}
-                  alt="card back"
-                />
-              </div>
-              <div className={styles.middleCard}>
-                <img src="/cards/0_hearts.svg" width={150} />
+        areTransactionsPassed ? (
+          <>
+            <div className={styles.cards}>
+              <div style={{ display: "flex" }}>
+                <div className={styles.deck}>
+                  <img
+                    className={styles.deckCard1}
+                    src="/cards/cardBack.svg"
+                    width={150}
+                    alt="card back"
+                  />
+                  <img
+                    className={styles.deckCard2}
+                    src="/cards/cardBack.svg"
+                    width={150}
+                    alt="card back"
+                  />
+                  <img
+                    className={styles.deckCard3}
+                    src="/cards/cardBack.svg"
+                    width={150}
+                    alt="card back"
+                  />
+                  <img
+                    className={styles.deckCard4}
+                    src="/cards/cardBack.svg"
+                    width={150}
+                    alt="card back"
+                  />
+                </div>
+                <div className={styles.middleCard}>
+                  <img src="/cards/0_hearts.svg" width={150} />
+                </div>
               </div>
             </div>
-            <Button
-              onClick={() => {
-                navigator.clipboard.writeText(roomUri);
-              }}
-              size="small"
+            <div className={styles.players}>
+              <div className={styles.opponent}>
+                <div
+                  className={styles.opponentName}
+                  onClick={() => {
+                    navigator.clipboard.writeText(roomUri);
+                  }}
+                >
+                  Your opponent (20)
+                </div>
+                {!isYourTurn ? (
+                  <div className={styles.speechBubble}>
+                    <h2 className={styles.opponentText}>
+                      I played a jack of spades ! (Trust me bro)
+                    </h2>
+                  </div>
+                ) : null}
+              </div>
+              <div className={styles.playerCards}>
+                {playerCards.map((card, index) => (
+                  <img
+                    key={index}
+                    onClick={() => onCardDepositChoose(card)}
+                    className={styles.card}
+                    src={`/cards/${card}_hearts.svg`}
+                    width={200}
+                  />
+                ))}
+              </div>
+              <div className={styles.playerActions}>
+                {!isYourTurn ? (
+                  <>
+                    <div className={styles.playerCardsInfo}>
+                      You have 20 cards
+                    </div>
+                    <Button onClick={() => console.log("bijour")} size="small">
+                      He Lies
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.playerCardsInfo}>
+                      You have 20 cards
+                    </div>
+                    <Button onClick={() => console.log("bijour")} size="small">
+                      Draw
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+            <Modal
+              disableAutoFocus
+              open={modalCardToTell}
+              onClose={() => setModalCardToTell(false)}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
             >
-              Copy game url
-            </Button>
-          </div>
-          <div className={styles.players}>
-            <div className={styles.opponent}>
-              <div
-                className={styles.opponentName}
+              <div className={styles.liarMenu}>
+                <h1 className={styles.menu_title}>Finalize your turn</h1>
+                <div className={styles.container}>
+                  <div className={styles.depositCard}>
+                    <img
+                      src={`/cards/${cardToDeposit}_hearts.svg`}
+                      width={200}
+                      alt="card back"
+                    />
+                    <h3>Deposited Card</h3>
+                  </div>
+                  <div className={styles.depositCard}>
+                    <div className={styles.announcedCard}>
+                      {allCards.map((card, index) => {
+                        return (
+                          <img
+                            key={index}
+                            onClick={() => onCardAnnouncedChoose(card, index)}
+                            className={
+                              cardToAnnounce && cardToAnnounce.index == index
+                                ? styles.modalCardChose
+                                : styles.modalCard
+                            }
+                            src={`/cards/${card}_hearts.svg`}
+                            width={70}
+                          />
+                        );
+                      })}
+                    </div>
+                    <h3>Choose the card you want to announce</h3>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    setIsYourTurn(!isYourTurn);
+                    setModalCardToTell(!modalCardToTell);
+                  }}
+                >
+                  Play
+                </Button>
+              </div>
+            </Modal>
+          </>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {isOnChainCreationAvailable ? (
+              <Button
                 onClick={() => {
                   navigator.clipboard.writeText(roomUri);
                 }}
+                size="small"
               >
-                Your opponent (20)
-              </div>
-              {!isYourTurn ? (
-                <div className={styles.speechBubble}>
-                  <h2 className={styles.opponentText}>
-                    I played a jack of spades ! (Trust me bro)
-                  </h2>
-                </div>
-              ) : null}
-            </div>
-            <div className={styles.playerCards}>
-              {playerCards.map((card, index) => (
-                <img
-                  key={index}
-                  onClick={() => onCardDepositChoose(card)}
-                  className={styles.card}
-                  src={`/cards/${card}_hearts.svg`}
-                  width={200}
-                />
-              ))}
-            </div>
-            <div className={styles.playerActions}>
-              {!isYourTurn ? (
-                <>
-                  <div className={styles.playerCardsInfo}>
-                    You have 20 cards
-                  </div>
-                  <Button onClick={() => console.log("bijour")} size="small">
-                    He Lies
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div className={styles.playerCardsInfo}>
-                    You have 20 cards
-                  </div>
-                  <Button onClick={() => console.log("bijour")} size="small">
-                    Draw
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-          <Modal
-            disableAutoFocus
-            open={modalCardToTell}
-            onClose={() => setModalCardToTell(false)}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <div className={styles.liarMenu}>
-              <h1 className={styles.menu_title}>Finalize your turn</h1>
-              <div className={styles.container}>
-                <div className={styles.depositCard}>
-                  <img
-                    src={`/cards/${cardToDeposit}_hearts.svg`}
-                    width={200}
-                    alt="card back"
-                  />
-                  <h3>Deposited Card</h3>
-                </div>
-                <div className={styles.depositCard}>
-                  <div className={styles.announcedCard}>
-                    {allCards.map((card, index) => {
-                      return (
-                        <img
-                          key={index}
-                          onClick={() => onCardAnnouncedChoose(card, index)}
-                          className={
-                            cardToAnnounce && cardToAnnounce.index == index
-                              ? styles.modalCardChose
-                              : styles.modalCard
-                          }
-                          src={`/cards/${card}_hearts.svg`}
-                          width={70}
-                        />
-                      );
-                    })}
-                  </div>
-                  <h3>Choose the card you want to announce</h3>
-                </div>
-              </div>
-              <Button
-                onClick={() => {
-                  setIsYourTurn(!isYourTurn);
-                  setModalCardToTell(!modalCardToTell);
-                }}
-              >
-                Play
+                Launch your game onchain
               </Button>
-            </div>
-          </Modal>
-        </>
+            ) : (
+              <>
+                <h1>We&apos;re waiting for you&apos;re opponent</h1>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(roomUri);
+                  }}
+                  size="small"
+                >
+                  Click to Copy game url
+                </Button>
+              </>
+            )}
+          </div>
+        )
       ) : (
-        <Button onClick={() => initGame()}>Init game</Button>
+        <Button onClick={() => initGame()}>Create game</Button>
       )}
     </div>
   );
