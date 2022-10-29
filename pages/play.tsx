@@ -46,6 +46,7 @@ const Play: NextPage = () => {
   const [shouldSendFraudProof, setShouldSendFraudProof] =
     useState<boolean>(false);
   const [areTransactionsPassed, setAreTransactionsPassed] = useState(false);
+  const [madeAllStates, setMadeAllStates] = useState(false)
 
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
@@ -72,6 +73,7 @@ const Play: NextPage = () => {
   const [otherPubKey, setOtherPubKey] = useState('')
   const gaslessContract = useGaslessLiarContract();
   const ethContract = useEthereumContract();
+  const [isWaitingForTx, setIsWaitingForTx] = useState(false)
 
 
   // ----------- blocks, transactions -----------
@@ -96,41 +98,32 @@ const Play: NextPage = () => {
               console.log('length', Object.keys(transactions).length)
               
             if (transactions && Object.keys(transactions).length > 0) {
-              transactions.map((ongoingTx: any) => {
 
-                console.log('ongoingTx', ongoingTx)
                 const tx = newBlock.transactions.filter((transaction: any) => {
-                  return transaction.transaction_hash == ongoingTx.transaction_hash;
+                  return transaction.transaction_hash == transactions.transaction_hash;
                 });
 
                 if (tx.length > 0) {
                   console.log('transaction was accepted', tx)
-                  tx.map((_tx: any) => {
-                    console.log('_tx', tx)
-                    const elem = transactions.filter((_elem: any) => {
-                      return _tx.transaction_hash == _elem.transaction_hash;
-                    });
-                    console.log('elem', elem)
-                    if (elem[0].player == 1) {
-                      console.log('sending msg to P2')
 
-                      var btnMsg = document.getElementById("sendKeyA");
-                      if (btnMsg) {
-                        btnMsg.click()
-                        console.log('send pubKeyA')
-                      }
-                    } else if (elem[0].player == 2) {
-                      // setAreTransactionsPassed(true)
-                      var btnMsg = document.getElementById("sendReady");
-                      if (btnMsg) {
-                        btnMsg.click()
-                        console.log('send ready msg')
-                      }
+                  if (transactions.player == 1) {
+                    console.log('sending msg to P2')
+
+                    var btnMsg = document.getElementById("sendKeyA");
+                    if (btnMsg) {
+                      btnMsg.click()
+                      console.log('send pubKeyA')
                     }
-                    transactions
-                  })
+                  } else if (transactions.player == 2) {
+                    setAreTransactionsPassed(true)
+                    var btnMsg = document.getElementById("sendReady");
+                    if (btnMsg) {
+                      btnMsg.click()
+                      console.log('send ready msg')
+                    }
+                  }
+                  setTransactions([])
                 }
-              })
             }
 
             return newBlock;
@@ -450,7 +443,8 @@ const Play: NextPage = () => {
             'type': 3
           };
           stateTable.push(_state3)
-          setAreTransactionsPassed(true)
+          // setAreTransactionsPassed(true)
+          setMadeAllStates(true)
           var card : any = new BN(_startingCard, 16)
           setStartingCard(card.umod(13));
           console.log('card', card)
@@ -467,7 +461,8 @@ const Play: NextPage = () => {
           setOngoingDispute(true)
         } else if (msg[0] == 'canPlay') {
           console.log('can Play to player B')
-          setAreTransactionsPassed(true);
+          // setAreTransactionsPassed(true);
+          setMadeAllStates(true)
           var card : any = new BN(stateTable[2].startingCard, 16)
           setStartingCard(card.umod(13));
           console.log('card', card)
@@ -488,7 +483,6 @@ const Play: NextPage = () => {
   const generateKey = () => {
     var _key = ec.genKeyPair()
     setKeyPair(_key)
-    console.log('_key', _key)
     return getStarkKey(_key)
   }
 
@@ -497,7 +491,6 @@ const Play: NextPage = () => {
     var calls : any[] = [];
     var _account = _starknet?.account.address.slice(2)
     var _sig = sign(keyPair, _account as string)
-    console.log('sig', _sig)
     calls.push({
       contractAddress: ethContract.address.toLowerCase(),
       entrypoint: 'approve',
@@ -526,7 +519,6 @@ const Play: NextPage = () => {
   }
 
   const startGameP2 = async () => {
-    // Send multicall 
     if(_starknet) {
       var _account = _starknet?.account.address.slice(2)
       var _sig = sign(keyPair, _account as string)
@@ -545,11 +537,8 @@ const Play: NextPage = () => {
       calls.push({
         contractAddress: gaslessContract.address.toLowerCase(),
         entrypoint: 'set_b_user',
-        calldata: [gameId, _sig]
+        calldata: [gameId, _sig[0], _sig[1]]
       });
-
-      //       - IERC20.approve(eth_contract, gll_contract, to_deposit);
-      // - GasLessLiar.set_b_user(gll_contract, game_id=1, sig=(signature_b_1, signature_b_2));
       _starknet.account.execute(calls).then((response: any) => {
         response.player = player
         setTransactions(response)
@@ -587,7 +576,7 @@ const Play: NextPage = () => {
   return (
     <div className={styles.playContainer}>
       {libp2p && peerId ? (
-        areTransactionsPassed ? (
+        madeAllStates ? (
           <>
             <div className={styles.cards}>
               <div style={{ display: "flex" }}>
@@ -736,7 +725,7 @@ const Play: NextPage = () => {
               </Button>
             ) : player == 1 ? (
               <>
-                <h1>We&apos;re waiting for you&apos;re opponent</h1>
+                <h1 style={{ 'color': '#FFF' }}>We&apos;re waiting for you&apos;re opponent</h1>
                 <Button
                   onClick={() => {
                     navigator.clipboard.writeText(roomUri);
@@ -748,15 +737,18 @@ const Play: NextPage = () => {
               </>
             ) : (
               <>
-                <h1>We&apos;re initializing the game</h1>
-                <Button
-                  onClick={() => {
-                    sendMessage('pubKeyB|'+ getStarkKey(keyPair))
-                  }}
-                  size="small"
-                >
-                  Connect to player 1
-                </Button>
+                <h1 style={{ 'color': '#FFF' }}>We&apos;re initializing the game</h1>
+                {!areTransactionsPassed ? (
+                  <Button
+                    onClick={() => {
+                      sendMessage('pubKeyB|'+ getStarkKey(keyPair))
+                    }}
+                    size="small"
+                  >
+                    Connect to player 1
+                  </Button>
+                )
+                : <></>}
               </>
             )}
           </div>
