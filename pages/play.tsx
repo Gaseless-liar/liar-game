@@ -20,7 +20,7 @@ import { getStarknet, IStarknetWindowObject } from "get-starknet";
 import { GetBlockResponse } from "starknet";
 import BN from "bn.js";
 import { getKeyPair } from "starknet/utils/ellipticCurve";
-import { makeState1 } from "../utils/state";
+import { checkIntegrity, makeState1, makeState2, makeState3 } from "../utils/state";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -114,7 +114,7 @@ const Play: NextPage = () => {
   const [keyPair, setKeyPair] = useState({})
   const [otherPubKey, setOtherPubKey] = useState('')
   const gaslessContract = useGaslessLiarContract();
-  const [stateTable, setStateTable] = useState<any>()
+
 
   // ----------- blocks, transactions -----------
   const [transactions, setTransactions] = useState<any>(null)
@@ -135,29 +135,46 @@ const Play: NextPage = () => {
             newBlock.transactions.push({
               transaction_hash: '111'
             })
+            newBlock.transactions.push({
+              transaction_hash: '222'
+            })
             console.log('transactions', transactions)
             if (transactions)
               console.log('length', Object.keys(transactions).length)
               
             if (transactions && Object.keys(transactions).length > 0) {
               transactions.map((ongoingTx: any) => {
+
                 console.log('ongoingTx', ongoingTx)
                 const tx = newBlock.transactions.filter((transaction: any) => {
                   return transaction.transaction_hash == ongoingTx.transaction_hash;
                 });
+
                 if (tx.length > 0) {
                   console.log('transaction was accepted', tx)
-                  tx.map((elem: any) => {
-                    if (elem.player == 1) {
+                  tx.map((_tx: any) => {
+                    console.log('_tx', tx)
+                    const elem = transactions.filter((_elem: any) => {
+                      return _tx.transaction_hash == _elem.transaction_hash;
+                    });
+                    console.log('elem', elem)
+                    if (elem[0].player == 1) {
                       console.log('sending msg to P2')
-                      var btnMsg = document.getElementById("btnMsg");
-                      if (btnMsg) btnMsg.click()
-                      sendMessage('pubKey:'+ getStarkKey(keyPair))
+
+                      var btnMsg = document.getElementById("sendKeyA");
+                      if (btnMsg) {
+                        btnMsg.click()
+                        console.log('send pubKeyA')
+                      }
+                    } else if (elem[0].player == 2) {
+                      // setAreTransactionsPassed(true)
+                      var btnMsg = document.getElementById("sendReady");
+                      if (btnMsg) {
+                        btnMsg.click()
+                        console.log('send ready msg')
+                      }
                     }
-                    else if (elem.player == 2) {
-                      setAreTransactionsPassed(true)
-                      sendMessage('ready')
-                    }
+                    transactions
                   })
                 }
               })
@@ -227,8 +244,13 @@ const Play: NextPage = () => {
     setStarknet(_starknet)
 
     generateKey();
-    var btnMsg = document.getElementById("sendKey1");
-    if (btnMsg) btnMsg.click()
+    const timer = setTimeout(() => {
+      var btnMsg = document.getElementById("sendKeyB");
+      if (btnMsg) {
+        btnMsg.click()
+        console.log('CLICKING')
+      }
+    }, 1000);
     
     setIsInit(true);
     setPlayer(2);
@@ -306,6 +328,17 @@ const Play: NextPage = () => {
     }
   }, [roomId, peerId, router.query]);
 
+  const [state1, setState1] = useState<any>()
+  const [s1, setS1] = useState<any>()
+  const [h1, setH1] = useState<any>()
+  const [sig1, setSig1] = useState<any>()
+  const [sig2, setSig2] = useState<any>()
+  const [sig3, setSig3] = useState<any>()
+  const [state2, setState2] = useState<any>()
+  const [state3, setState3] = useState<any>()
+  const [stateTable, setStateTable] = useState<any>([])
+  const [ongoingDispute, setOngoingDispute] = useState(false)
+
   useEffect(() => {
     if (libp2p && isInit) {
       // Listen for new peers
@@ -346,33 +379,113 @@ const Play: NextPage = () => {
         if (msg[0] == 'pubKeyB') {
             setOtherPubKey(msg[1])
             if(player == 1) startGame()
-            else startGameP2()
         } else if (msg[0] == 'pubKeyA') {
           setOtherPubKey(msg[1])
+          startGameP2()
         } else if (msg[0] == 'ready') {
-          setAreTransactionsPassed(true)
-
-          // Player A calls : 
-          const [ state1, sig ] = makeState1(gameId, keyPair, stateTable);
-          // TODO check if stateTable est bien updated 
-          console.log('stateTable', stateTable);
-          // var data = 'state1|' + 
-
-          // A sends value to B 
-          // State 1 
-          // Sig : 2 values
-          // sendMessage()
+          // setAreTransactionsPassed(true)
+          launchState1()
         } else if (msg[0] == 'state1') {
-          console.log('state1', msg)
+          console.log('state1 received from A', msg)
+          const _h1 = msg[1].split(':')[1]
+          const _sig1 = msg[2].split(':')[1]
+          const _sig = _sig1.split(',')
+           const _state1 = {
+            'gameId' : gameId,
+            'h1' : _h1,
+            'type' : 1,
+           }
+          stateTable.push(_state1)
+
+          console.log('stateTable', stateTable)
+          console.log('_sig', _sig)
+
+          var _key = new BN(otherPubKey.substring(2), 16)
+          const [generateDisputeId, sigState1] = checkIntegrity(_state1, [_sig[0], _sig[1]], gameId, _key, keyPair, stateTable)
+          console.log('generateDisputeId', generateDisputeId)
+          console.log('sigState1', sigState1)
+
+          if (!generateDisputeId && !sigState1) {
+            const [state2, sig2] = makeState2(_state1, [_sig[0], _sig[1]], gameId, _key, keyPair, stateTable)
+            console.log('state2', state2)
+            console.log('sig2', sig2)
+            setState2(state2)
+            setSig2(sig2)
+            const timer = setTimeout(() => {
+              var btnMsg = document.getElementById("sendState2");
+              if (btnMsg) {
+                btnMsg.click()
+                console.log('CLICKING state 2')
+              }
+            }, 1000);
+          } else {
+            // ! IF dispute_id > call open_dispute_state_1(dispute_id, game_id, h1, sig) > jeu sur pause + dire qu'il y a un problème 
+            setOngoingDispute(true)
+            if(_starknet) {
+              var _account = _starknet?.account.address.slice(2)
+              var _sig_ = sign(keyPair, _account as string)
+              _starknet.account.execute({
+                contractAddress: gaslessContract.address.toLowerCase(),
+                entrypoint: 'open_dispute_state_1',
+                calldata: [generateDisputeId, gameId, _h1, _sig_]
+              }).then((response: any) => {
+                response.player = player
+                setTransactions(response)
+
+                const timer = setTimeout(() => {
+                  var btnMsg = document.getElementById("sendDispute");
+                  if (btnMsg) {
+                    btnMsg.click()
+                    console.log('CLICKING Dispute state 2')
+                  }
+                }, 1000);
+              })
+            }
+          }
         } else if (msg[0] == 'state2') {
-          console.log('state2', msg)
+          console.log('state2 received', msg)
+          const prevStateHash = msg[1].split(':')[1]
+          const _s2 = msg[2].split(':')[1]
+          const _h1 =  msg[3].split(':')[1]
+          const _sig2 = msg[4].split(':')[1]
+          const _sig = _sig2.split(',')
+          console.log('_sig', _sig)
+
+          const _state2 = {
+            'gameId' : gameId,
+            'prevStateHash' : prevStateHash,
+            's2' : _s2,
+            'h1' : _h1,
+            'type' : 2
+          }
+          stateTable.push(_state2)
+
+          var _key = new BN(otherPubKey.substring(2), 16)
+          // const [generateDisputeId, sigState1] = checkIntegrity(_state2, [_sig[0], _sig[1]], 0, _key, keyPair, stateTable)
+          // console.log('generateDisputeId', generateDisputeId)
+          console.log('s1', s1)
+
+          const [state3, sig] = makeState3(_state2, [_sig[0], _sig[1]], s1, _h1, gameId, otherPubKey, keyPair, stateTable)
+
+          console.log('state3', state3)
+          console.log('sig', sig)
+          setState3(state3)
+          setSig3(sig)
+          const timer = setTimeout(() => {
+            var btnMsg = document.getElementById("sendState3");
+            if (btnMsg) {
+              btnMsg.click()
+              console.log('CLICKING state 3')
+            }
+          }, 1000);
+
+        } else if (msg[0] == 'sendDispute') {
+
+
+        } else if (msg[0] == 'sendDispute') {
+          console.log('statedispute')
+          setOngoingDispute(true)
         }
-
-
-        // Messages : 
-        // player B a rejoint la partie on-chain > A calls create_state_1 & send return value to player B
-        // B calls create_state_2 & send return value to player A
-        // const [ state2, sig ] = makeState2(state1: any, sigState1: Signature, gameId: number, oldH1: string, pubKeyA: BigNumberish, keyPairB: KeyPair, stateTable:any[])
       });
     }
   }, [libp2p, isInit]);
@@ -394,6 +507,7 @@ const Play: NextPage = () => {
   }
 
   const startGame = async () => {
+    console.log('starting game')
     // Send multicall 
     // ! uncomment 
     // var calls : any[] = [];
@@ -427,18 +541,49 @@ const Play: NextPage = () => {
 
   const startGameP2 = async () => {
     // Send multicall 
-    if(_starknet) {
-      var _account = _starknet?.account.address.slice(2)
-      var _sig = sign(keyPair, _account as string)
-      _starknet.account.execute({
-        contractAddress: gaslessContract.address.toLowerCase(),
-        entrypoint: 'set_a_user',
-        calldata: [gameId, 'sig(felt, felt']
-      }).then((response: any) => {
-        response.player = player
-        setTransactions(response)
-      })
+    // if(_starknet) {
+    //   var _account = _starknet?.account.address.slice(2)
+    //   var _sig = sign(keyPair, _account as string)
+    //   _starknet.account.execute({
+    //     contractAddress: gaslessContract.address.toLowerCase(),
+    //     entrypoint: 'set_a_user',
+    //     calldata: [gameId, 'sig(felt, felt']
+    //   }).then((response: any) => {
+    //     response.player = player
+    //     setTransactions(response)
+    //   })
+    // }
+    console.log('start game 2')
+    var tx = []
+    const response = {
+      code: 'TX_RECEIVED',
+      transaction_hash : "222",
+      player: player
     }
+    tx.push(response)
+    setTransactions(tx)
+  }
+
+  const launchState1 = () => {
+    console.log('launching state 1')
+    const [ state1, sig, s1, h1 ] = makeState1(gameId, keyPair, stateTable);
+    console.log('stateTable', stateTable)
+    // stateTable.push({})
+    setState1(state1)
+    console.log('s1', s1)
+    console.log('h1', h1)
+    console.log('sig', sig)
+    setH1(h1)
+    setS1(s1)
+    setSig1(sig)
+
+    const timer = setTimeout(() => {
+      var btnMsg = document.getElementById("sendState1");
+      if (btnMsg) {
+        btnMsg.click()
+        console.log('CLICKING state 1')
+      }
+    }, 1000);
   }
 
   const testSig = () => {
@@ -619,7 +764,7 @@ const Play: NextPage = () => {
                 <h1>We&apos;re initializing the game</h1>
                 <Button
                   onClick={() => {
-                    sendMessage('pubKeyB|pubKey:'+ getStarkKey(keyPair))
+                    sendMessage('pubKeyB|'+ getStarkKey(keyPair))
                   }}
                   size="small"
                 >
@@ -632,7 +777,13 @@ const Play: NextPage = () => {
       ) : (
         <Button onClick={() => initGame()}>Create game</Button>
       )}
-      <button id='sendKey1' onClick={() => sendMessage('pubKeyA|pubKey:'+ getStarkKey(keyPair))} style={{display: 'none'}}></button>
+      <button id='sendKeyB' onClick={() => sendMessage('pubKeyB|'+ getStarkKey(keyPair))} style={{display: 'none'}}></button>
+      <button id='sendKeyA' onClick={() => sendMessage('pubKeyA|'+ getStarkKey(keyPair))} style={{display: 'none'}}></button>
+      <button id='sendReady' onClick={() => sendMessage('ready|')} style={{display: 'none'}}></button>
+      <button id='sendState1' onClick={() => sendMessage('state1|h1:'+h1+'|sig:'+sig1)} style={{display: 'none'}}></button>
+      <button id='sendState2' onClick={() => sendMessage('state2|prevStateHash:'+state2.prevStateHash+'|s2:'+state2.s2+'|h1:'+state2.h1+'|type:'+state2.type+'|sig:'+sig2)} style={{display: 'none'}}></button>
+      <button id='sendState3' onClick={() => sendMessage('state3|prevStateHash:'+state3.prevStateHash+'|s1:'+state3.s1+'|startingCard:'+state3.startingCard+'|type:'+state3.type+'|sig:'+sig3)} style={{display: 'none'}}></button>
+      <button id='sendDispute' onClick={() => sendMessage('disputeOngoing|')} style={{display: 'none'}}></button>
     </div>
   );
 };
