@@ -50,6 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
 }
 
 .players {
@@ -109,6 +110,7 @@
 
 .opponentText {
   padding: 1rem 1rem 1rem 1rem;
+  color: black;
 }
 
 .playerActions {
