@@ -15,10 +15,12 @@ import { floodsub } from "@libp2p/floodsub";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { useGaslessLiarContract } from "../hooks/contracts";
-import { ec, getStarkKey } from "starknet/dist/utils/ellipticCurve";
+import { ec, getStarkKey, sign } from "starknet/dist/utils/ellipticCurve";
 import { getStarknet, IStarknetWindowObject } from "get-starknet";
 import { GetBlockResponse } from "starknet";
-import { drawStartingCard } from "../utils/playerActions";
+import BN from "bn.js";
+import { getKeyPair } from "starknet/utils/ellipticCurve";
+import { makeState1 } from "../utils/state";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -112,6 +114,7 @@ const Play: NextPage = () => {
   const [keyPair, setKeyPair] = useState({})
   const [otherPubKey, setOtherPubKey] = useState('')
   const gaslessContract = useGaslessLiarContract();
+  const [stateTable, setStateTable] = useState<any>()
 
   // ----------- blocks, transactions -----------
   const [transactions, setTransactions] = useState<any>(null)
@@ -147,6 +150,10 @@ const Play: NextPage = () => {
                   tx.map((elem: any) => {
                     if (elem.player == 1) {
                       console.log('sending msg to P2')
+                      var btnMsg = document.getElementById("btnMsg");
+                        btnMsg.onclick = function() {
+                          hangoutButton.click(); // this will trigger the click event
+                        };
                       sendMessage('pubKey:'+ getStarkKey(keyPair))
                     }
                     else if (elem.player == 2) {
@@ -340,6 +347,10 @@ const Play: NextPage = () => {
             else startGameP2()
         } else if (msgType[0] == 'ready') {
           setAreTransactionsPassed(true)
+
+          // Player A calls : 
+          const [ state1, sig ] = makeState1(gameId, keyPair, stateTable);
+          console.log('stateTable', stateTable);
         }
 
         // Messages : 
@@ -361,6 +372,7 @@ const Play: NextPage = () => {
   const generateKey = () => {
     var _key = ec.genKeyPair()
     setKeyPair(_key)
+    console.log('_key', _key)
     return getStarkKey(_key)
   }
 
@@ -368,6 +380,8 @@ const Play: NextPage = () => {
     // Send multicall 
     // ! uncomment 
     // var calls : any[] = [];
+    var _account = _starknet?.account.address.slice(2)
+    var _sig = sign(keyPair, _account as string)
     // calls.push({
     //     contractAddress: gaslessContract.address.toLowerCase(),
     //     entrypoint: 'create_game',
@@ -376,7 +390,7 @@ const Play: NextPage = () => {
     // calls.push({
     //     contractAddress: gaslessContract.address.toLowerCase(),
     //     entrypoint: 'set_a_user',
-    //     calldata: [gameId, 'sig(felt, felt']
+    //     calldata: [gameId, _sig]
     // });
     // if(_starknet)
     //   _starknet.account.execute(calls).then((response: any) => {
@@ -396,7 +410,9 @@ const Play: NextPage = () => {
 
   const startGameP2 = async () => {
     // Send multicall 
-    if(_starknet)
+    if(_starknet) {
+      var _account = _starknet?.account.address.slice(2)
+      var _sig = sign(keyPair, _account as string)
       _starknet.account.execute({
         contractAddress: gaslessContract.address.toLowerCase(),
         entrypoint: 'set_a_user',
@@ -405,6 +421,16 @@ const Play: NextPage = () => {
         response.player = player
         setTransactions(response)
       })
+    }
+  }
+
+  const testSig = () => {
+    // getKeyPair(new BN(1))
+    // @ts-ignore
+    var _account = _starknet.account.address.slice(2)
+    console.log('account', _account)
+    var _sig = sign(keyPair, _account as string)
+    console.log('sign', _sig)
   }
 
   // -------------- END libP2P management -------------------------
@@ -589,6 +615,7 @@ const Play: NextPage = () => {
       ) : (
         <Button onClick={() => initGame()}>Create game</Button>
       )}
+      <Button onClick={() => testSig()}></Button>
     </div>
   );
 };
