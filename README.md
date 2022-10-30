@@ -1,21 +1,13 @@
-## Overview
+<h1 align="center">
+  <br>
+  <img src="/logo.svg?raw=true" alt="Cards logo" width="256">
+  <br>
+</h1>
 
-Webapp to interact with the on-chain game Imperium Wars, [(here is a demo)](https://game.imperiumwars.xyz/).
+<h4 align="center">🃏 A lightning network inspired Starknet Game</h4>
 
-## Setup
+# Why GasLessLiar?
+Blockchain allows decentralized interactions between users following contract rules, but blockchain interactions are expensive and slow. GasLessLiar is a proof of concept of a Game which allows honest users to avoid interacting with the chain. The idea is pretty simple: a contract allows you to prove if your opponent is malicious and will punish him. And because he would be punished if he was malicious, he will probably stay honest, and your interactions will therefore stay off-chain. To check the contract code, [Click here](https://github.com/Gaseless-liar/gaslessliar).
 
-First, install the node modules with `npm i` then run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Learn More
-
-To learn more about Imperium wars project you can check [Whitepaper](https://cloudfil.es/YjgYTS4lpNF).
-
-For further collaboration, you can reach out to us on [twitter](https://twitter.com/imperiumwars).
+# P2P client
+Creating a decentralized game has two interesting aspects: it ensures that the rules are enforced (you can't cheat by compromising a server since there is none), and it also promises incensurability (nobody can stop you from playing). In order for our game to preserve these two properties we needed to avoid third parties, that's why we used libP2P. It allows users to connect directly, no server can stop them. 
