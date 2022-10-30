@@ -48,7 +48,7 @@ export function makeState2(
 }
 
 export function checkIntegrity2 (
-    state2: any, sigState2: Signature, gameId: number, s1: any, oldH1: string, pubKeyB: BigNumberish
+    state2: any, sigState2: Signature, gameId: number, s1: number, oldH1: string, pubKeyB: BigNumberish
 ) {
     const state2Hashed = computeHashOnElements([state2.gameId, state2.prevStateHash, state2.s2, state2.h1, state2.type]);
     if (!(verifyIntegrity([[state2.gameId, gameId], [state2.type, 2], [oldH1, state2.h1], [hash(s1), state2.h1]]) && verifySig(sigState2, pubKeyB, state2Hashed))) {
@@ -257,3 +257,4 @@ export function makeState9(state8: any, gameId: number, keyPairA: KeyPair, state
     const sig = signH(keyPairA, stateHash);
     stateTable.push(state9);
     return [state9, sig];
+}
