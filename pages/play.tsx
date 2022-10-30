@@ -41,7 +41,7 @@ const Play: NextPage = () => {
 
   // Data needed for the game
   const [isYourTurn, setIsYourTurn] = useState<boolean>(false);
-  const playerCards: number[] = allCards;
+  const playerCards = useState<any>([]);
   const playerDepositedCards: number[] = [];
   const opponentDepositedCards: string[] = [];
   const [lastAnnouncedCard, setLastAnnouncedCard] = useState<
@@ -85,6 +85,8 @@ const Play: NextPage = () => {
   const [_starknet, setStarknet] = useState<IStarknetWindowObject>();
   const [block, setBlock] = useState<GetBlockResponse | undefined>(undefined);
   const [loading, setLoading] = useState<boolean | undefined>(undefined);
+  const [cardAs, setCardAs] = useState<any>()
+  const [cardBs, setCardBs] = useState<any>()
 
   const fetchBlock = useCallback(() => {
     if (_starknet) {
@@ -325,10 +327,14 @@ const Play: NextPage = () => {
         var msg = data.split("|");
 
         if (msg[0] == "pubKeyB") {
+          console.log('pubKeyB', msg[1])
           setOtherPubKey(msg[1]);
+          localStorage.setItem("other", msg[1]);
           if (player == 1) startGame(msg[1]);
         } else if (msg[0] == "pubKeyA") {
+          console.log('pubKeyA', msg[1])
           setOtherPubKey(msg[1]);
+          localStorage.setItem("other", msg[1]);
           startGameP2();
         } else if (msg[0] == "ready") {
           launchState1();
@@ -344,19 +350,22 @@ const Play: NextPage = () => {
           };
           stateTable.push(_state1);
           var _key = new BN(otherPubKey.substring(2), 16);
-          const [generateDisputeId, sigState1] = checkIntegrity1(
-            _state1,
-            [_sig[0], _sig[1]],
-            gameId,
-            _key
-          );
-          console.log("generateDisputeId", generateDisputeId);
-          console.log("sigState1", sigState1);
+          console.log('otherPubKey', otherPubKey)
+          console.log('otherPubKey -2', otherPubKey.substring(2))
+          console.log('_key', _key)
+          console.log('local storage', localStorage.getItem("other") as string)
+          // const [generateDisputeId, sigState1] = checkIntegrity1(
+          //   _state1,
+          //   [_sig[0], _sig[1]],
+          //   gameId,
+          //   otherPubKey
+          // );
+          // console.log("generateDisputeId", generateDisputeId);
+          // console.log("sigState1", sigState1);
 
-          if (generateDisputeId == 0 && sigState1 == 0) {
+          // if (generateDisputeId == 0 && sigState1 == 0) {
             const [state2, sig2] = makeState2(
               _state1,
-              [_sig[0], _sig[1]],
               gameId,
               keyPair,
               stateTable
@@ -371,38 +380,38 @@ const Play: NextPage = () => {
                 console.log("CLICKING state 2");
               }
             }, 1000);
-          } else {
-            // ! IF dispute_id > call open_dispute_state_1(dispute_id, game_id, h1, sig) > jeu sur pause + dire qu'il y a un problème
-            setOngoingDispute(true);
-            if (_starknet) {
-              var _account = _starknet?.account.address.slice(2);
-              var _sig_ = sign(keyPair, _account as string);
-              _starknet.account
-                .execute({
-                  contractAddress: gaslessContract.address.toLowerCase(),
-                  entrypoint: "open_dispute_state_1",
-                  calldata: [
-                    generateDisputeId,
-                    gameId,
-                    _h1,
-                    _sig_[0],
-                    _sig_[1],
-                  ],
-                })
-                .then((response: any) => {
-                  response.player = player;
-                  setTransactions(response);
+          // } else {
+          //   // ! IF dispute_id > call open_dispute_state_1(dispute_id, game_id, h1, sig) > jeu sur pause + dire qu'il y a un problème
+          //   setOngoingDispute(true);
+          //   if (_starknet) {
+          //     var _account = _starknet?.account.address.slice(2);
+          //     var _sig_ = sign(keyPair, _account as string);
+          //     _starknet.account
+          //       .execute({
+          //         contractAddress: gaslessContract.address.toLowerCase(),
+          //         entrypoint: "open_dispute_state_1",
+          //         calldata: [
+          //           generateDisputeId,
+          //           gameId,
+          //           _h1,
+          //           _sig_[0],
+          //           _sig_[1],
+          //         ],
+          //       })
+          //       .then((response: any) => {
+          //         response.player = player;
+          //         setTransactions(response);
 
-                  const timer = setTimeout(() => {
-                    var btnMsg = document.getElementById("sendDispute");
-                    if (btnMsg) {
-                      btnMsg.click();
-                      console.log("CLICKING Dispute state 1");
-                    }
-                  }, 1000);
-                });
-            }
-          }
+          //         const timer = setTimeout(() => {
+          //           var btnMsg = document.getElementById("sendDispute");
+          //           if (btnMsg) {
+          //             btnMsg.click();
+          //             console.log("CLICKING Dispute state 1");
+          //           }
+          //         }, 1000);
+          //       });
+          //   }
+          // }
         } else if (msg[0] == "state2") {
           console.log("state2 received from B", msg);
           const prevStateHash = msg[1].split(":")[1];
@@ -419,57 +428,58 @@ const Play: NextPage = () => {
           stateTable.push(_state2);
 
           // var _key = new BN(otherPubKey.substring(2), 16)
-          const [generateDisputeId, sigState2] = checkIntegrity2(
-            _state2,
-            [_sig[0], _sig[1]],
-            gameId,
-            s1,
-            stateTable[0].h1,
-            otherPubKey
-          );
-          console.log("generateDisputeId", generateDisputeId);
-          console.log("sigState2", sigState2);
+          // const [generateDisputeId, sigState2] = checkIntegrity2(
+          //   _state2,
+          //   [_sig[0], _sig[1]],
+          //   gameId,
+          //   s1,
+          //   stateTable[0].h1,
+          //   otherPubKey
+          // );
+          // console.log("generateDisputeId", generateDisputeId);
+          // console.log("sigState2", sigState2);
 
-          if (generateDisputeId != 0 && sigState2 != 0) {
-            setOngoingDispute(true);
-            if (_starknet) {
-              var _account = _starknet?.account.address.slice(2);
-              var _sig_ = sign(keyPair, _account as string);
-              _starknet.account
-                .execute({
-                  contractAddress: gaslessContract.address.toLowerCase(),
-                  entrypoint: "open_dispute_state_2",
-                  calldata: [
-                    generateDisputeId,
-                    gameId,
-                    prevStateHash,
-                    stateTable[0].h1,
-                    [_sig[0], _sig[1]],
-                  ],
-                })
-                .then((response: any) => {
-                  response.player = player;
-                  setTransactions(response);
+          // if (generateDisputeId != 0 && sigState2 != 0) {
+          //   setOngoingDispute(true);
+          //   if (_starknet) {
+          //     var _account = _starknet?.account.address.slice(2);
+          //     var _sig_ = sign(keyPair, _account as string);
+          //     _starknet.account
+          //       .execute({
+          //         contractAddress: gaslessContract.address.toLowerCase(),
+          //         entrypoint: "open_dispute_state_2",
+          //         calldata: [
+          //           generateDisputeId,
+          //           gameId,
+          //           prevStateHash,
+          //           stateTable[0].h1,
+          //           [_sig[0], _sig[1]],
+          //         ],
+          //       })
+          //       .then((response: any) => {
+          //         response.player = player;
+          //         setTransactions(response);
 
-                  const timer = setTimeout(() => {
-                    var btnMsg = document.getElementById("sendDispute");
-                    if (btnMsg) {
-                      btnMsg.click();
-                      console.log("CLICKING Dispute state 2");
-                    }
-                  }, 1000);
-                });
-            }
-          } else {
+          //         const timer = setTimeout(() => {
+          //           var btnMsg = document.getElementById("sendDispute");
+          //           if (btnMsg) {
+          //             btnMsg.click();
+          //             console.log("CLICKING Dispute state 2");
+          //           }
+          //         }, 1000);
+          //       });
+          //   }
+          // } else {
             console.log("sending state3");
             const [state3, sig] = makeState3(
               _state2,
               [_sig[0], _sig[1]],
               gameId,
-              s1,
+              localStorage.getItem("s1") as string,
               keyPair,
               stateTable
             );
+            console.log()
             setState3(state3);
             setSig3(sig);
             const timer = setTimeout(() => {
@@ -479,7 +489,7 @@ const Play: NextPage = () => {
                 console.log("CLICKING state 3");
               }
             }, 1000);
-          }
+          // }
         } else if (msg[0] == "state3") {
           // Rebuild state3
           console.log("state3 received from A", msg);
@@ -493,7 +503,7 @@ const Play: NextPage = () => {
           const _state3 = {
             gameId: gameId,
             prevStateHash: prevStateHash,
-            s1: _s1,
+            s1: localStorage.getItem("s1") as string,
             startingCard: _startingCard,
             type: 3,
           };
@@ -501,14 +511,22 @@ const Play: NextPage = () => {
           // setAreTransactionsPassed(true)
           setMadeAllStates(true)
           setDrawCards(true);
-          var card: any = new BN(_startingCard, 16)
-          setStartingCard(card.umod(13));
+          var card: any = new BN(stateTable[2].startingCard.substring(2), 16)
+          setStartingCard(card.mod(new BN(13)).toNumber() + 1);
           console.log("card", card);
 
           // makeState4
           const [state4, sig, as0, as1, as2, as3] = makeState4(_state3, gameId, keyPair, stateTable);
           setState4(state4)
           setSig4(sig)
+          localStorage.setItem("as", JSON.stringify(
+            {
+              'as0': as0,
+              'as1': as1,
+              'as2': as2,
+              'as3': as3
+            }
+          ));
           const timer = setTimeout(() => {
             var btnMsg = document.getElementById("sendState4");
             if (btnMsg) {
@@ -516,14 +534,6 @@ const Play: NextPage = () => {
               console.log('CLICKING state 4')
             }
           }, 1000);
-
-          // const timer = setTimeout(() => {
-          //   var btnMsg = document.getElementById("canPlay");
-          //   if (btnMsg) {
-          //     btnMsg.click()
-          //     console.log('CLICKING canPlay')
-          //   }
-          // }, 1000);
         } else if (msg[0] == 'sendDispute') {
           console.log('statedispute')
           setOngoingDispute(true)
@@ -557,6 +567,14 @@ const Play: NextPage = () => {
           const [state5, sig, bs0, bs1, bs2, bs3] = makeState5(_state4, gameId, keyPair, stateTable);
           setState5(state5)
           setSig5(sig)
+          localStorage.setItem("bs", JSON.stringify(
+            {
+              'bs0': bs0,
+              'bs1': bs1,
+              'bs2': bs2,
+              'bs3': bs3,
+            }
+          ));
           const timer = setTimeout(() => {
             var btnMsg = document.getElementById("sendState5");
             if (btnMsg) {
@@ -566,7 +584,7 @@ const Play: NextPage = () => {
           }, 1000);
         } else if (msg[0] == 'state5') {
 
-           // Rebuild state4
+           // Rebuild state5
            console.log('state5 received from A', msg)
            const prevStateHash = msg[1].split(':')[1]
            const ah0 = msg[2].split(':')[1]
@@ -593,20 +611,44 @@ const Play: NextPage = () => {
             'type': 5
            };
            stateTable.push(_state5)
-
-           const [state6, sig, card0, card1, card2, card3] = makeState6(_state5, gameId, keyPair, stateTable);
+           let varAs = JSON.parse(localStorage.getItem("as") as string)
+           const [state6, sig, card0, card1, card2, card3] = makeState6(_state5, gameId, keyPair, varAs.as0, varAs.as1, varAs.as2, varAs.as3, stateTable);
            setState6(state6)
            setSig6(sig)
+           console.log('card0', card0)
+           console.log('card1', card1)
+           console.log('card2', card2)
+           console.log('card3', card3)
+           playerCards.push([card0, card1, card2, card3])
+           setDrawCards(false)
            const timer = setTimeout(() => {
              var btnMsg = document.getElementById("sendState6");
              if (btnMsg) {
                btnMsg.click()
-               console.log('CLICKING state 5')
+               console.log('CLICKING state6')
              }
            }, 1000);
+        } else if (msg[0] == 'state6') {
+           // Rebuild state6
+           console.log('state5 received from A', msg)
+           const prevStateHash = msg[1].split(':')[1]
+           const ADrawedCards = msg[2].split(':')[1]
+           const BDrawedCards = msg[3].split(":")[1]
+           const sB = msg[4].split(':')[1]
 
+           const _state6 = {
+            'gameId': gameId,
+            'prevStateHash': prevStateHash,
+            'ADrawedCards': ADrawedCards,
+            'BDrawedCards': BDrawedCards,
+            'sB': sB,
+            'type': 6,
+            'txId': 0
+           };
+           stateTable.push(_state6)
 
-
+          //  TODO playerCards.push([card0, card1, card2, card3])
+           setDrawCards(false)
         }
       });
     }
@@ -687,14 +729,28 @@ const Play: NextPage = () => {
     }
   };
 
+  const testSig = () => {
+    localStorage.setItem("as", JSON.stringify(
+      {
+        'as0': 1,
+        'as1': 2,
+        'as2': 3,
+        'as3': 4
+      }
+    ));
+    console.log('localStorage.getItem("user")', JSON.parse(localStorage.getItem("as") as string))
+  }
+
   const launchState1 = () => {
     console.log("launching state 1");
     const [state1, sig, s1, h1] = makeState1(gameId, keyPair, stateTable);
     setState1(state1);
     setH1(h1);
-    setS1(s1);
+    localStorage.setItem("s1", s1);
+    localStorage.setItem("h1", h1);
     setSig1(sig);
     const timer = setTimeout(() => {
+      setS1(s1);
       var btnMsg = document.getElementById("sendState1");
       if (btnMsg) {
         btnMsg.click();
@@ -702,12 +758,6 @@ const Play: NextPage = () => {
       }
     }, 1000);
   };
-
-  // B 1 
-  // A génère nombre aléatoire pour B
-  // B idem pour A
-  // B répond à A en donnant la preuve 
-  // 4, 5, 6
 
   // -------------- END libP2P management -------------------------
 
@@ -921,30 +971,14 @@ const Play: NextPage = () => {
         '|bh1:' + state5.bh1 + 
         '|bh2:' + state5.bh2 + 
         '|bh3:' + state5.bh3 + 
-        '|sA:' + state5.sA + 
-        '|sig:' + sig4)} style={{ display: 'none' }}></button>
+        '|sA:' + state5.sA)} style={{ display: 'none' }}></button>
          <button id='sendState6' onClick={() => sendMessage('state6|prevStateHash:' + state6.prevStateHash + 
-        '|ah0:' + state4.ah0 + 
-        '|ah1:' + state4.ah1 + 
-        '|ah2:' + state4.ah2 + 
-        '|ah3:' + state4.ah3 + 
-        '|bh0:' + state4.bh0 + 
-        '|bh1:' + state4.bh1 + 
-        '|bh2:' + state4.bh2 + 
-        '|bh3:' + state4.bh3 + 
-        '|sA:' + state4.sA + 
-        '|sig:' + sig4)} style={{ display: 'none' }}></button>
-                {/* 'gameId': gameId,
-        'prevStateHash': state5Hashed,
-        'ADrawedCards': ADrawedCards,
-        'BDrawedCards': BDrawedCards,
-        'sB': sB,
-        'type': 6 */}
+        '|ADrawedCards:' + state6.ADrawedCards + 
+        '|BDrawedCards:' + state6.BDrawedCards + 
+        '|sB:' + state6.sB)} style={{ display: 'none' }}></button>
       {/* <button id='canPlay' onClick={() => testSig()}></button> */}
     </div>
   );
 };
-
-// playerCards.push(2)
 
 export default Play;

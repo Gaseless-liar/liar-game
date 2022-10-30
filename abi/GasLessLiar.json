@@ -175,6 +175,36 @@
     {
         "inputs": [
             {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "win_game_a",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "game_id",
+                "type": "felt"
+            },
+            {
+                "name": "sig",
+                "type": "(felt, felt)"
+            }
+        ],
+        "name": "win_game_b",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "name": "dispute",
                 "type": "felt"
             },

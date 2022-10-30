@@ -257,3 +257,4 @@ export function makeState9(state8: any, gameId: number, keyPairA: KeyPair, state
     const sig = signH(keyPairA, stateHash);
     stateTable.push(state9);
     return [state9, sig];
+}
