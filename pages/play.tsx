@@ -338,9 +338,12 @@ const Play: NextPage = () => {
           stateTable.push(_state1)
           var _key = new BN(otherPubKey.substring(2), 16)
           const [generateDisputeId, sigState1] = checkIntegrity1(_state1, [_sig[0], _sig[1]], gameId, _key)
+          console.log('generateDisputeId', generateDisputeId)
+          console.log('sigState1', sigState1)
 
           if (generateDisputeId == 0 && sigState1 == 0) {
             const [state2, sig2] = makeState2(_state1, [_sig[0], _sig[1]], gameId, keyPair, stateTable)
+            
             setState2(state2)
             setSig2(sig2)
             const timer = setTimeout(() => {
@@ -368,7 +371,7 @@ const Play: NextPage = () => {
                   var btnMsg = document.getElementById("sendDispute");
                   if (btnMsg) {
                     btnMsg.click()
-                    console.log('CLICKING Dispute state 2')
+                    console.log('CLICKING Dispute state 1')
                   }
                 }, 1000);
               })
@@ -389,10 +392,12 @@ const Play: NextPage = () => {
           }
           stateTable.push(_state2)
 
-          var _key = new BN(otherPubKey.substring(2), 16)
-          const [generateDisputeId, sigState1] = checkIntegrity2(_state2, [_sig[0], _sig[1]], gameId, s1, stateTable[0].h1, otherPubKey)
+          // var _key = new BN(otherPubKey.substring(2), 16)
+          const [generateDisputeId, sigState2] = checkIntegrity2(_state2, [_sig[0], _sig[1]], gameId, s1, stateTable[0].h1, otherPubKey)
+          console.log('generateDisputeId', generateDisputeId)
+          console.log('sigState2', sigState2)
 
-          if (!generateDisputeId && !sigState1) {
+          if (generateDisputeId != 0 && sigState2 != 0) {
             setOngoingDispute(true)
             if (_starknet) {
               var _account = _starknet?.account.address.slice(2)
@@ -414,8 +419,8 @@ const Play: NextPage = () => {
                 }, 1000);
               })
             }
-
           } else {
+            console.log('sending state3')
             const [state3, sig] = makeState3(_state2, [_sig[0], _sig[1]], gameId, s1, keyPair, stateTable)
             setState3(state3)
             setSig3(sig)
@@ -463,10 +468,9 @@ const Play: NextPage = () => {
           setOngoingDispute(true)
         } else if (msg[0] == 'canPlay') {
           console.log('can Play to player B')
-          // setAreTransactionsPassed(true);
           setMadeAllStates(true)
-          var card: any = new BN(stateTable[2].startingCard, 16)
-          setStartingCard(card.umod(13));
+          var card: any = new BN(stateTable[2].startingCard.substring(2), 16)
+          setStartingCard(card.mod(new BN(13)).toNumber() + 1);
           console.log('card', card)
         }
       });
@@ -565,12 +569,10 @@ const Play: NextPage = () => {
   }
 
   const testSig = () => {
-    // getKeyPair(new BN(1))
-    // @ts-ignore
-    var _account = _starknet.account.address.slice(2)
-    console.log('account', _account)
-    var _sig = sign(keyPair, _account as string)
-    console.log('sign', _sig)
+    let card: any = new BN("5d7f14627c9f6da52ca1e78ec37b6f85dccd0ea694ef7b1bf0aec6fb121f986", 16)
+    console.log('account', card)
+    let card_ = card.mod(new BN(13)).toNumber() + 1
+    console.log('card_', card_)
   }
 
   // -------------- END libP2P management -------------------------
@@ -765,6 +767,7 @@ const Play: NextPage = () => {
       <button id='sendState3' onClick={() => sendMessage('state3|prevStateHash:' + state3.prevStateHash + '|s1:' + state3.s1 + '|startingCard:' + state3.startingCard + '|type:' + state3.type + '|sig:' + sig3)} style={{ display: 'none' }}></button>
       <button id='sendDispute' onClick={() => sendMessage('disputeOngoing|')} style={{ display: 'none' }}></button>
       <button id='canPlay' onClick={() => sendMessage('canPlay|')} style={{ display: 'none' }}></button>
+      {/* <button id='canPlay' onClick={() => testSig()}></button> */}
     </div>
   );
 };
