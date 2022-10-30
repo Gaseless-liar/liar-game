@@ -107,6 +107,7 @@ const Play: NextPage = () => {
   const [loading, setLoading] = useState<boolean | undefined>(undefined);
   const [cardAs, setCardAs] = useState<any>()
   const [cardBs, setCardBs] = useState<any>()
+  const [cardsOpp, setCardsOpp] = useState(4)
 
   const fetchBlock = useCallback(() => {
     if (_starknet) {
@@ -117,12 +118,6 @@ const Play: NextPage = () => {
             if (oldBlock?.block_hash === newBlock.block_hash) {
               return oldBlock;
             }
-            console.log("newBlock", newBlock);
-
-            console.log("transactions", transactions);
-            if (transactions)
-              console.log("length", Object.keys(transactions).length);
-
             if (transactions && Object.keys(transactions).length > 0) {
               const tx = newBlock.transactions.filter((transaction: any) => {
                 return (
@@ -131,22 +126,16 @@ const Play: NextPage = () => {
               });
 
               if (tx.length > 0) {
-                console.log("transaction was accepted", tx);
-
                 if (transactions.player == 1) {
-                  console.log("sending msg to P2");
-
                   var btnMsg = document.getElementById("sendKeyA");
                   if (btnMsg) {
                     btnMsg.click();
-                    console.log("send pubKeyA");
                   }
                 } else if (transactions.player == 2) {
                   setAreTransactionsPassed(true);
                   var btnMsg = document.getElementById("sendReady");
                   if (btnMsg) {
                     btnMsg.click();
-                    console.log("send ready msg");
                   }
                 }
                 setTransactions([]);
@@ -216,7 +205,6 @@ const Play: NextPage = () => {
       if (btnMsg) {
         btnMsg.click();
         setConnectDisabled(true);
-        console.log("CLICKING");
       }
     }, 1000);
     setIsInit(true);
@@ -224,8 +212,6 @@ const Play: NextPage = () => {
   };
 
   const initGame = async () => {
-    console.log("initializing");
-
     var bootstrapList = [
       "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
       "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
@@ -253,8 +239,6 @@ const Play: NextPage = () => {
         }),
       ],
     });
-
-    console.log("libp2p", libp2p);
     await libp2p.start();
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
@@ -263,7 +247,6 @@ const Play: NextPage = () => {
     setGameId(rand);
 
     var topic = "room_" + libp2p.peerId.toString();
-    console.log("roomId", topic);
     setRoomId(topic);
     setRoomUri(
       `http://localhost:3000/play?id=${libp2p.peerId.toString()}&room=${topic}&gameId=${rand}`
@@ -273,9 +256,6 @@ const Play: NextPage = () => {
     const _starknet = await getStarknet();
     await _starknet.enable({ showModal: true });
     setStarknet(_starknet);
-
-    console.log("_starknet", _starknet);
-
     setIsInit(true);
   };
 
@@ -317,8 +297,6 @@ const Play: NextPage = () => {
       // Listen for new peers
       libp2p.addEventListener("peer:discovery", (evt: any) => {
         const peer = evt.detail;
-        // console.log(`Found peer ${peer.id.toString()}`)
-
         // dial them when we discover them
         libp2p.dial(evt.detail.id).catch((err: any) => {
           // console.log(`Could not dial ${evt.detail.id}`, err)
@@ -343,23 +321,20 @@ const Play: NextPage = () => {
       libp2p.pubsub.subscribe(roomId);
       libp2p.pubsub.addEventListener("message", (evt: any) => {
         var data = uint8ArrayToString(evt.detail.data);
-        console.log("message received", data);
         var msg = data.split("|");
 
         if (msg[0] == "pubKeyB") {
-          console.log('pubKeyB', msg[1])
           setOtherPubKey(msg[1]);
           localStorage.setItem("other", msg[1]);
           if (player == 1) startGame(msg[1]);
         } else if (msg[0] == "pubKeyA") {
-          console.log('pubKeyA', msg[1])
           setOtherPubKey(msg[1]);
+          setIsYourTurn(true);
           localStorage.setItem("other", msg[1]);
           startGameP2();
         } else if (msg[0] == "ready") {
           launchState1();
         } else if (msg[0] == "state1") {
-          console.log("state1 received from A", msg);
           const _h1 = msg[1].split(":")[1];
           const _sig1 = msg[2].split(":")[1];
           const _sig = _sig1.split(",");
@@ -369,21 +344,14 @@ const Play: NextPage = () => {
             type: 1,
           };
           stateTable.push(_state1);
-          var _key = new BN(otherPubKey.substring(2), 16);
-          console.log('otherPubKey', otherPubKey)
-          console.log('otherPubKey -2', otherPubKey.substring(2))
-          console.log('_key', _key)
-          console.log('local storage', localStorage.getItem("other") as string)
-          // const [generateDisputeId, sigState1] = checkIntegrity1(
-          //   _state1,
-          //   [_sig[0], _sig[1]],
-          //   gameId,
-          //   otherPubKey
-          // );
-          // console.log("generateDisputeId", generateDisputeId);
-          // console.log("sigState1", sigState1);
-
-          // if (generateDisputeId == 0 && sigState1 == 0) {
+          var _key = new BN((localStorage.getItem("other") as string).substring(2), 16);
+          const [generateDisputeId, sigState1] = checkIntegrity1(
+            _state1,
+            [_sig[0], _sig[1]],
+            gameId,
+            _key
+          );
+          if (generateDisputeId == 0 && sigState1 == 0) {
             const [state2, sig2] = makeState2(
               _state1,
               gameId,
@@ -397,43 +365,39 @@ const Play: NextPage = () => {
               var btnMsg = document.getElementById("sendState2");
               if (btnMsg) {
                 btnMsg.click();
-                console.log("CLICKING state 2");
               }
             }, 1000);
-          // } else {
-          //   // ! IF dispute_id > call open_dispute_state_1(dispute_id, game_id, h1, sig) > jeu sur pause + dire qu'il y a un problème
-          //   setOngoingDispute(true);
-          //   if (_starknet) {
-          //     var _account = _starknet?.account.address.slice(2);
-          //     var _sig_ = sign(keyPair, _account as string);
-          //     _starknet.account
-          //       .execute({
-          //         contractAddress: gaslessContract.address.toLowerCase(),
-          //         entrypoint: "open_dispute_state_1",
-          //         calldata: [
-          //           generateDisputeId,
-          //           gameId,
-          //           _h1,
-          //           _sig_[0],
-          //           _sig_[1],
-          //         ],
-          //       })
-          //       .then((response: any) => {
-          //         response.player = player;
-          //         setTransactions(response);
+          } else {
+            setOngoingDispute(true);
+            if (_starknet) {
+              var _account = _starknet?.account.address.slice(2);
+              var _sig_ = sign(keyPair, _account as string);
+              _starknet.account
+                .execute({
+                  contractAddress: gaslessContract.address.toLowerCase(),
+                  entrypoint: "open_dispute_state_1",
+                  calldata: [
+                    generateDisputeId,
+                    gameId,
+                    _h1,
+                    _sig_[0],
+                    _sig_[1],
+                  ],
+                })
+                .then((response: any) => {
+                  response.player = player;
+                  setTransactions(response);
 
-          //         const timer = setTimeout(() => {
-          //           var btnMsg = document.getElementById("sendDispute");
-          //           if (btnMsg) {
-          //             btnMsg.click();
-          //             console.log("CLICKING Dispute state 1");
-          //           }
-          //         }, 1000);
-          //       });
-          //   }
-          // }
+                  const timer = setTimeout(() => {
+                    var btnMsg = document.getElementById("sendDispute");
+                    if (btnMsg) {
+                      btnMsg.click();
+                    }
+                  }, 1000);
+                });
+            }
+          }
         } else if (msg[0] == "state2") {
-          console.log("state2 received from B", msg);
           const prevStateHash = msg[1].split(":")[1];
           const _s2 = msg[2].split(":")[1];
           const _sig2 = msg[3].split(":")[1];
@@ -447,50 +411,46 @@ const Play: NextPage = () => {
           };
           stateTable.push(_state2);
 
-          // var _key = new BN(otherPubKey.substring(2), 16)
-          // const [generateDisputeId, sigState2] = checkIntegrity2(
-          //   _state2,
-          //   [_sig[0], _sig[1]],
-          //   gameId,
-          //   s1,
-          //   stateTable[0].h1,
-          //   otherPubKey
-          // );
-          // console.log("generateDisputeId", generateDisputeId);
-          // console.log("sigState2", sigState2);
+          var _key = new BN((localStorage.getItem("other") as string).substring(2), 16)
+          const [generateDisputeId, sigState2] = checkIntegrity2(
+            _state2,
+            [_sig[0], _sig[1]],
+            gameId,
+            s1,
+            stateTable[0].h1,
+            _key
+          );
 
-          // if (generateDisputeId != 0 && sigState2 != 0) {
-          //   setOngoingDispute(true);
-          //   if (_starknet) {
-          //     var _account = _starknet?.account.address.slice(2);
-          //     var _sig_ = sign(keyPair, _account as string);
-          //     _starknet.account
-          //       .execute({
-          //         contractAddress: gaslessContract.address.toLowerCase(),
-          //         entrypoint: "open_dispute_state_2",
-          //         calldata: [
-          //           generateDisputeId,
-          //           gameId,
-          //           prevStateHash,
-          //           stateTable[0].h1,
-          //           [_sig[0], _sig[1]],
-          //         ],
-          //       })
-          //       .then((response: any) => {
-          //         response.player = player;
-          //         setTransactions(response);
+          if (generateDisputeId != 0 && sigState2 != 0) {
+            setOngoingDispute(true);
+            if (_starknet) {
+              var _account = _starknet?.account.address.slice(2);
+              var _sig_ = sign(keyPair, _account as string);
+              _starknet.account
+                .execute({
+                  contractAddress: gaslessContract.address.toLowerCase(),
+                  entrypoint: "open_dispute_state_2",
+                  calldata: [
+                    generateDisputeId,
+                    gameId,
+                    prevStateHash,
+                    stateTable[0].h1,
+                    [_sig[0], _sig[1]],
+                  ],
+                })
+                .then((response: any) => {
+                  response.player = player;
+                  setTransactions(response);
 
-          //         const timer = setTimeout(() => {
-          //           var btnMsg = document.getElementById("sendDispute");
-          //           if (btnMsg) {
-          //             btnMsg.click();
-          //             console.log("CLICKING Dispute state 2");
-          //           }
-          //         }, 1000);
-          //       });
-          //   }
-          // } else {
-            console.log("sending state3");
+                  const timer = setTimeout(() => {
+                    var btnMsg = document.getElementById("sendDispute");
+                    if (btnMsg) {
+                      btnMsg.click();
+                    }
+                  }, 1000);
+                });
+            }
+          } else {
             const [state3, sig] = makeState3(
               _state2,
               [_sig[0], _sig[1]],
@@ -506,20 +466,16 @@ const Play: NextPage = () => {
               var btnMsg = document.getElementById("sendState3");
               if (btnMsg) {
                 btnMsg.click();
-                console.log("CLICKING state 3");
               }
             }, 1000);
-          // }
+          }
         } else if (msg[0] == "state3") {
           // Rebuild state3
-          console.log("state3 received from A", msg);
           const prevStateHash = msg[1].split(":")[1];
           const _s1 = msg[2].split(":")[1];
           const _startingCard = msg[3].split(":")[1];
           const _sig2 = msg[5].split(":")[1];
           const _sig = _sig2.split(",");
-          console.log("_sig", _sig);
-
           const _state3 = {
             gameId: gameId,
             prevStateHash: prevStateHash,
@@ -528,12 +484,10 @@ const Play: NextPage = () => {
             type: 3,
           };
           stateTable.push(_state3);
-          // setAreTransactionsPassed(true)
           setMadeAllStates(true);
           setDrawCards(true);
           var card: any = new BN(stateTable[2].startingCard.substring(2), 16)
-          setStartingCard(card.mod(new BN(13)).toNumber() + 1);
-          console.log("card", card);
+          setStartingCard(card.mod(new BN(12)).toNumber() + 1);
 
           // makeState4
           const [state4, sig, as0, as1, as2, as3] = makeState4(_state3, gameId, keyPair, stateTable);
@@ -551,23 +505,17 @@ const Play: NextPage = () => {
             var btnMsg = document.getElementById("sendState4");
             if (btnMsg) {
               btnMsg.click();
-              console.log("CLICKING state 4");
             }
           }, 1000);
         } else if (msg[0] == 'sendDispute') {
-          console.log('statedispute')
           setOngoingDispute(true)
         } else if (msg[0] == 'state4') {
-          
-          console.log('can Play to player B')
           setMadeAllStates(true)
           var card: any = new BN(stateTable[2].startingCard.substring(2), 16)
-          setStartingCard(card.mod(new BN(13)).toNumber() + 1);
-          console.log("card", card);
+          setStartingCard(card.mod(new BN(12)).toNumber() + 1);
           setDrawCards(true);
 
           // Rebuild state4
-          console.log("state4 received from B", msg);
           const prevStateHash = msg[1].split(":")[1];
           const ah0 = msg[2].split(":")[1];
           const ah1 = msg[3].split(":")[1];
@@ -599,13 +547,11 @@ const Play: NextPage = () => {
             var btnMsg = document.getElementById("sendState5");
             if (btnMsg) {
               btnMsg.click();
-              console.log("CLICKING state 5");
             }
           }, 1000);
         } else if (msg[0] == 'state5') {
 
            // Rebuild state5
-           console.log('state5 received from A', msg)
            const prevStateHash = msg[1].split(':')[1]
            const ah0 = msg[2].split(':')[1]
            const ah1 = msg[3].split(":")[1]
@@ -635,26 +581,20 @@ const Play: NextPage = () => {
            const [state6, sig, card0, card1, card2, card3] = makeState6(_state5, gameId, keyPair, varAs.as0, varAs.as1, varAs.as2, varAs.as3, stateTable);
            setState6(state6)
            setSig6(sig)
-           console.log('card0', card0)
-           console.log('card1', card1)
-           console.log('card2', card2)
-           console.log('card3', card3)
            setPlayerCards([
-            (new BN((card0 as string).substring(2), 16)).mod(new BN(13)).toNumber() + 1, 
-            (new BN((card1 as string).substring(2), 16)).mod(new BN(13)).toNumber() + 1, 
-            (new BN((card2 as string).substring(2), 16)).mod(new BN(13)).toNumber() + 1, 
-            (new BN((card3 as string).substring(2), 16)).mod(new BN(13)).toNumber() + 1])
+            (new BN((card0 as string).substring(2), 16)).mod(new BN(12)).toNumber() + 1, 
+            (new BN((card1 as string).substring(2), 16)).mod(new BN(12)).toNumber() + 1, 
+            (new BN((card2 as string).substring(2), 16)).mod(new BN(12)).toNumber() + 1, 
+            (new BN((card3 as string).substring(2), 16)).mod(new BN(12)).toNumber() + 1])
            setDrawCards(false)
            const timer = setTimeout(() => {
              var btnMsg = document.getElementById("sendState6");
              if (btnMsg) {
                btnMsg.click()
-               console.log('CLICKING state6')
              }
            }, 1000);
         } else if (msg[0] == 'state6') {
            // Rebuild state6
-           console.log('state5 received from A', msg)
            const prevStateHash = msg[1].split(':')[1]
            const ADrawedCards = msg[2].split(':')[1]
            const BDrawedCards = msg[3].split(":")[1]
@@ -673,22 +613,22 @@ const Play: NextPage = () => {
            let varBs = JSON.parse(localStorage.getItem("bs") as string)
 
           let cards = deduceCards([varBs.bs0, varBs.bs1, varBs.bs2, varBs.bs3], [sB as any, sB as any, sB as any, sB as any])
-          let _card0 = (new BN(cards[0][0].substring(2), 16)).mod(new BN(13)).toNumber() + 1
-          let _card1 = (new BN(cards[0][1].substring(2), 16)).mod(new BN(13)).toNumber() + 1
-          let _card2 = (new BN(cards[0][2].substring(2), 16)).mod(new BN(13)).toNumber() + 1
-          let _card3 = (new BN(cards[0][3].substring(2), 16)).mod(new BN(13)).toNumber() + 1
+          let _card0 = (new BN(cards[0][0].substring(2), 16)).mod(new BN(12)).toNumber() + 1
+          let _card1 = (new BN(cards[0][1].substring(2), 16)).mod(new BN(12)).toNumber() + 1
+          let _card2 = (new BN(cards[0][2].substring(2), 16)).mod(new BN(12)).toNumber() + 1
+          let _card3 = (new BN(cards[0][3].substring(2), 16)).mod(new BN(12)).toNumber() + 1
 
           setPlayerCards([_card0, _card1, _card2, _card3])
           setDrawCards(false)
         } else if (msg[0] == 'cardDeposited') {
-          console.log('card deposited')
+          setDepositBackCard(true);
+          setCardsOpp(cardsOpp - 1);
         }
       });
     }
   }, [libp2p, isInit]);
 
   const sendMessage = (data: string) => {
-    console.log("sending msg", data);
     libp2p.pubsub
       .publish(roomId, uint8ArrayFromString(data))
       .catch((err: any) => {
@@ -762,20 +702,7 @@ const Play: NextPage = () => {
     }
   };
 
-  const testSig = () => {
-    localStorage.setItem("as", JSON.stringify(
-      {
-        'as0': 1,
-        'as1': 2,
-        'as2': 3,
-        'as3': 4
-      }
-    ));
-    console.log('localStorage.getItem("user")', JSON.parse(localStorage.getItem("as") as string))
-  }
-
   const launchState1 = () => {
-    console.log("launching state 1");
     const [state1, sig, s1, h1] = makeState1(gameId, keyPair, stateTable);
     setState1(state1);
     setH1(h1);
@@ -787,7 +714,6 @@ const Play: NextPage = () => {
       var btnMsg = document.getElementById("sendState1");
       if (btnMsg) {
         btnMsg.click();
-        console.log("CLICKING state 1");
       }
     }, 1000);
   };
@@ -851,15 +777,8 @@ const Play: NextPage = () => {
                     navigator.clipboard.writeText(roomUri);
                   }}
                 >
-                  Your opponent (20)
+                  Your opponent (4)
                 </div>
-                {!isYourTurn ? (
-                  <div className={styles.speechBubble}>
-                    <h2 className={styles.opponentText}>
-                      I played a jack of spades ! (Trust me bro)
-                    </h2>
-                  </div>
-                ) : null}
               </div>
               <div className={styles.playerCards}>
                 {playerCards.map((card : any, index : number) => (
@@ -876,7 +795,7 @@ const Play: NextPage = () => {
                 {!isYourTurn ? (
                   <>
                     <div className={styles.playerCardsInfo}>
-                      You have 20 cards
+                      You have {playerCards.length} cards
                     </div>
                     <Button onClick={() => console.log("bijour")} size="small">
                       He Lies
@@ -885,7 +804,7 @@ const Play: NextPage = () => {
                 ) : (
                   <>
                     <div className={styles.playerCardsInfo}>
-                      You have 20 cards
+                      You have {playerCards.length} cards
                     </div>
                     <Button onClick={() => console.log("bijour")} size="small">
                       Draw

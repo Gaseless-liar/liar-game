@@ -154,7 +154,7 @@ export function checkIntegrity5(state5: any, sigState5: Signature, gameId: numbe
         state5.gameId, state5.prevStateHash, state5.ah0, state5.ah1, state5.ah2, state5.ah3,
         state5.bh0, state5.bh1, state5.bh2, state5.bh3, state5.sA, state5.type
     ]);
-    if (!(verifyIntegrity([[state5.gameId, gameId], [state5.type, 5], [ah0, state5.ah0], [ah1, state5.ah1], [ah2, state5.ah2], [ah3, state5.ah3]]) && verifySig(sigState5, publicKeyA, state5Hashed))) {
+    if (!(verifyIntegrity([[state5.gameId, gameId], [state5.type, 5], [ah0, state5.ah0], [ah1, state5.ah1], [ah2, state5.ah2], [ah3, state5.ah3]]) && verifySig(sigState5, publicKeyA as any, state5Hashed))) {
         return [generateDisputeId(), gameId, state5Hashed, sigState5];
     }
     return [0, 0];
@@ -182,7 +182,7 @@ export function makeState6(state5: any, gameId: number, keyPairB: KeyPair, as0: 
         'type': 6,
         'txId': 0
     };
-    const stateHash = computeHashOnElements(Object.values(state6));
+    const stateHash = computeHashOnElements(Object.values(state6) as any);
     const sig = signH(keyPairB, stateHash);
     stateTable.push(state6);
     return [state6, sig, card0, card1, card2, card3];
