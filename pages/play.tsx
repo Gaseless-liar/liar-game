@@ -23,7 +23,16 @@ import { getStarknet, IStarknetWindowObject } from "get-starknet";
 import { GetBlockResponse } from "starknet";
 import BN from "bn.js";
 import { getKeyPair } from "starknet/utils/ellipticCurve";
-import { checkIntegrity1, checkIntegrity2, makeState1, makeState2, makeState3, makeState4, makeState5, makeState6 } from "../utils/state";
+import {
+  checkIntegrity1,
+  checkIntegrity2,
+  makeState1,
+  makeState2,
+  makeState3,
+  makeState4,
+  makeState5,
+  makeState6,
+} from "../utils/state";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -34,14 +43,14 @@ const Play: NextPage = () => {
     index: 0,
     card: 0,
   });
-  const [startingCard, setStartingCard] = useState<any>();
+  const [startingCard, setStartingCard] = useState<number>(7);
   const [isOnChainCreationAvailable, setIsOnChainCreationAvailable] =
     useState<boolean>(false);
   const [connectDisabled, setConnectDisabled] = useState<boolean>(false);
 
   // Data needed for the game
   const [isYourTurn, setIsYourTurn] = useState<boolean>(false);
-  const playerCards: number[] = allCards;
+  const [playerCards, setPlayerCards] = useState<number[]>(allCards);
   const playerDepositedCards: number[] = [];
   const opponentDepositedCards: string[] = [];
   const [lastAnnouncedCard, setLastAnnouncedCard] = useState<
@@ -50,8 +59,9 @@ const Play: NextPage = () => {
   const [shouldSendFraudProof, setShouldSendFraudProof] =
     useState<boolean>(false);
   const [areTransactionsPassed, setAreTransactionsPassed] = useState(false);
-  const [madeAllStates, setMadeAllStates] = useState(false)
-  const [drawCards, setDrawCards] = useState(false)
+  const [madeAllStates, setMadeAllStates] = useState(true);
+  const [depositBackCard, setDepositBackCard] = useState<boolean>(false);
+  const [drawCards, setDrawCards] = useState(false);
 
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
@@ -60,6 +70,13 @@ const Play: NextPage = () => {
 
   function onCardAnnouncedChoose(card: number, index: number): void {
     setCardToAnnounce({ index, card });
+  }
+
+  function onPlay(): void {
+    setIsYourTurn(!isYourTurn);
+    setModalCardToTell(!modalCardToTell);
+    setDepositBackCard(true);
+    setPlayerCards(playerCards.filter((card) => card !== cardToDeposit));
   }
 
   // -------------- libP2P management -----------------------------
@@ -273,22 +290,22 @@ const Play: NextPage = () => {
     }
   }, [roomId, peerId, router.query]);
 
-  const [state1, setState1] = useState<any>()
-  const [s1, setS1] = useState<any>()
-  const [h1, setH1] = useState<any>()
-  const [sig1, setSig1] = useState<any>()
-  const [sig2, setSig2] = useState<any>()
-  const [sig3, setSig3] = useState<any>()
-  const [sig4, setSig4] = useState<any>()
-  const [sig5, setSig5] = useState<any>()
-  const [sig6, setSig6] = useState<any>()
-  const [state2, setState2] = useState<any>()
-  const [state3, setState3] = useState<any>()
-  const [state4, setState4] = useState<any>()
-  const [state5, setState5] = useState<any>()
-  const [state6, setState6] = useState<any>()
-  const [stateTable, setStateTable] = useState<any>([])
-  const [ongoingDispute, setOngoingDispute] = useState(false)
+  const [state1, setState1] = useState<any>();
+  const [s1, setS1] = useState<any>();
+  const [h1, setH1] = useState<any>();
+  const [sig1, setSig1] = useState<any>();
+  const [sig2, setSig2] = useState<any>();
+  const [sig3, setSig3] = useState<any>();
+  const [sig4, setSig4] = useState<any>();
+  const [sig5, setSig5] = useState<any>();
+  const [sig6, setSig6] = useState<any>();
+  const [state2, setState2] = useState<any>();
+  const [state3, setState3] = useState<any>();
+  const [state4, setState4] = useState<any>();
+  const [state5, setState5] = useState<any>();
+  const [state6, setState6] = useState<any>();
+  const [stateTable, setStateTable] = useState<any>([]);
+  const [ongoingDispute, setOngoingDispute] = useState(false);
 
   useEffect(() => {
     if (libp2p && isInit) {
@@ -356,7 +373,6 @@ const Play: NextPage = () => {
           if (generateDisputeId == 0 && sigState1 == 0) {
             const [state2, sig2] = makeState2(
               _state1,
-              [_sig[0], _sig[1]],
               gameId,
               keyPair,
               stateTable
@@ -499,21 +515,26 @@ const Play: NextPage = () => {
           };
           stateTable.push(_state3);
           // setAreTransactionsPassed(true)
-          setMadeAllStates(true)
+          setMadeAllStates(true);
           setDrawCards(true);
-          var card: any = new BN(_startingCard, 16)
+          var card: any = new BN(_startingCard, 16);
           setStartingCard(card.umod(13));
           console.log("card", card);
 
           // makeState4
-          const [state4, sig, as0, as1, as2, as3] = makeState4(_state3, gameId, keyPair, stateTable);
-          setState4(state4)
-          setSig4(sig)
+          const [state4, sig, as0, as1, as2, as3] = makeState4(
+            _state3,
+            gameId,
+            keyPair,
+            stateTable
+          );
+          setState4(state4);
+          setSig4(sig);
           const timer = setTimeout(() => {
             var btnMsg = document.getElementById("sendState4");
             if (btnMsg) {
-              btnMsg.click()
-              console.log('CLICKING state 4')
+              btnMsg.click();
+              console.log("CLICKING state 4");
             }
           }, 1000);
 
@@ -524,89 +545,95 @@ const Play: NextPage = () => {
           //     console.log('CLICKING canPlay')
           //   }
           // }, 1000);
-        } else if (msg[0] == 'sendDispute') {
-          console.log('statedispute')
-          setOngoingDispute(true)
-        } else if (msg[0] == 'state4') {
-          
-          console.log('can Play to player B')
-          setMadeAllStates(true)
-          var card: any = new BN(stateTable[2].startingCard.substring(2), 16)
+        } else if (msg[0] == "sendDispute") {
+          console.log("statedispute");
+          setOngoingDispute(true);
+        } else if (msg[0] == "state4") {
+          console.log("can Play to player B");
+          setMadeAllStates(true);
+          var card: any = new BN(stateTable[2].startingCard.substring(2), 16);
           setStartingCard(card.mod(new BN(13)).toNumber() + 1);
-          console.log('card', card)
-          setDrawCards(true)
+          console.log("card", card);
+          setDrawCards(true);
 
           // Rebuild state4
-          console.log('state4 received from B', msg)
-          const prevStateHash = msg[1].split(':')[1]
-          const ah0 = msg[2].split(':')[1]
-          const ah1 = msg[3].split(":")[1]
-          const ah2 = msg[4].split(':')[1]
-          const ah3 = msg[5].split(':')[1]
+          console.log("state4 received from B", msg);
+          const prevStateHash = msg[1].split(":")[1];
+          const ah0 = msg[2].split(":")[1];
+          const ah1 = msg[3].split(":")[1];
+          const ah2 = msg[4].split(":")[1];
+          const ah3 = msg[5].split(":")[1];
           const _state4 = {
-            'gameId': gameId,
-            'prevStateHash': prevStateHash,
-            'ah0': ah0,
-            'ah1': ah1,
-            'ah2': ah2,
-            'ah3': ah3,
-            'type': 4
+            gameId: gameId,
+            prevStateHash: prevStateHash,
+            ah0: ah0,
+            ah1: ah1,
+            ah2: ah2,
+            ah3: ah3,
+            type: 4,
           };
-          stateTable.push(_state4)
+          stateTable.push(_state4);
 
-          const [state5, sig, bs0, bs1, bs2, bs3] = makeState5(_state4, gameId, keyPair, stateTable);
-          setState5(state5)
-          setSig5(sig)
+          const [state5, sig, bs0, bs1, bs2, bs3] = makeState5(
+            _state4,
+            gameId,
+            keyPair,
+            stateTable
+          );
+          setState5(state5);
+          setSig5(sig);
           const timer = setTimeout(() => {
             var btnMsg = document.getElementById("sendState5");
             if (btnMsg) {
-              btnMsg.click()
-              console.log('CLICKING state 5')
+              btnMsg.click();
+              console.log("CLICKING state 5");
             }
           }, 1000);
-        } else if (msg[0] == 'state5') {
+        } else if (msg[0] == "state5") {
+          // Rebuild state4
+          console.log("state5 received from A", msg);
+          const prevStateHash = msg[1].split(":")[1];
+          const ah0 = msg[2].split(":")[1];
+          const ah1 = msg[3].split(":")[1];
+          const ah2 = msg[4].split(":")[1];
+          const ah3 = msg[5].split(":")[1];
+          const bh0 = msg[6].split(":")[1];
+          const bh1 = msg[7].split(":")[1];
+          const bh2 = msg[8].split(":")[1];
+          const bh3 = msg[9].split(":")[1];
+          const sA = msg[10].split(":")[1];
+          const _state5 = {
+            gameId: gameId,
+            prevStateHash: prevStateHash,
+            ah0: ah0,
+            ah1: ah1,
+            ah2: ah2,
+            ah3: ah3,
+            bh0: bh0,
+            bh1: bh1,
+            bh2: bh2,
+            bh3: bh3,
+            sA: sA,
+            type: 5,
+          };
+          stateTable.push(_state5);
 
-           // Rebuild state4
-           console.log('state5 received from A', msg)
-           const prevStateHash = msg[1].split(':')[1]
-           const ah0 = msg[2].split(':')[1]
-           const ah1 = msg[3].split(":")[1]
-           const ah2 = msg[4].split(':')[1]
-           const ah3 = msg[5].split(':')[1]
-           const bh0 = msg[6].split(':')[1]
-           const bh1 = msg[7].split(':')[1]
-           const bh2 = msg[8].split(':')[1]
-           const bh3 = msg[9].split(':')[1]
-           const sA = msg[10].split(':')[1]
-           const _state5 = {
-            'gameId': gameId,
-            'prevStateHash': prevStateHash,
-            'ah0': ah0,
-            'ah1': ah1,
-            'ah2': ah2,
-            'ah3': ah3,
-            'bh0': bh0,
-            'bh1': bh1,
-            'bh2': bh2,
-            'bh3': bh3,
-            'sA': sA,
-            'type': 5
-           };
-           stateTable.push(_state5)
+          // const [state6, sig, card0, card1, card2, card3] = makeState6(
+          //   _state5,
+          //   gameId,
+          //   keyPair,
+          //   stateTable
+          // );
 
-           const [state6, sig, card0, card1, card2, card3] = makeState6(_state5, gameId, keyPair, stateTable);
-           setState6(state6)
-           setSig6(sig)
-           const timer = setTimeout(() => {
-             var btnMsg = document.getElementById("sendState6");
-             if (btnMsg) {
-               btnMsg.click()
-               console.log('CLICKING state 5')
-             }
-           }, 1000);
-
-
-
+          setState6(state6);
+          setSig6(sig);
+          const timer = setTimeout(() => {
+            var btnMsg = document.getElementById("sendState6");
+            if (btnMsg) {
+              btnMsg.click();
+              console.log("CLICKING state 5");
+            }
+          }, 1000);
         }
       });
     }
@@ -703,10 +730,10 @@ const Play: NextPage = () => {
     }, 1000);
   };
 
-  // B 1 
+  // B 1
   // A génère nombre aléatoire pour B
   // B idem pour A
-  // B répond à A en donnant la preuve 
+  // B répond à A en donnant la preuve
   // 4, 5, 6
 
   // -------------- END libP2P management -------------------------
@@ -746,6 +773,17 @@ const Play: NextPage = () => {
                 </div>
                 <div className={styles.middleCard}>
                   <img src={`/cards/${startingCard}_hearts.svg`} width={150} />
+                  {depositBackCard ? (
+                    <>
+                      <img
+                        className={styles.deckCard5}
+                        src={`/cards/cardBack.svg`}
+                        width={150}
+                      />
+                    </>
+                  ) : (
+                    <></>
+                  )}
                 </div>
               </div>
             </div>
@@ -821,6 +859,9 @@ const Play: NextPage = () => {
                   <div className={styles.depositCard}>
                     <div className={styles.announcedCard}>
                       {allCards.map((card, index) => {
+                        if (card < startingCard) {
+                          return <></>;
+                        }
                         return (
                           <img
                             key={index}
@@ -839,14 +880,7 @@ const Play: NextPage = () => {
                     <h3>Choose the card you want to announce</h3>
                   </div>
                 </div>
-                <Button
-                  onClick={() => {
-                    setIsYourTurn(!isYourTurn);
-                    setModalCardToTell(!modalCardToTell);
-                  }}
-                >
-                  Play
-                </Button>
+                <Button onClick={() => onPlay()}>Play</Button>
               </div>
             </Modal>
           </>
@@ -897,44 +931,237 @@ const Play: NextPage = () => {
       ) : (
         <Button onClick={() => initGame()}>Create game</Button>
       )}
-      <button id='sendKeyB' onClick={() => sendMessage('pubKeyB|' + getStarkKey(keyPair))} style={{ display: 'none' }}></button>
-      <button id='sendKeyA' onClick={() => sendMessage('pubKeyA|' + getStarkKey(keyPair))} style={{ display: 'none' }}></button>
-      <button id='sendReady' onClick={() => sendMessage('ready|')} style={{ display: 'none' }}></button>
-      <button id='sendState1' onClick={() => sendMessage('state1|h1:' + h1 + '|sig:' + sig1)} style={{ display: 'none' }}></button>
-      <button id='sendState2' onClick={() => sendMessage('state2|prevStateHash:' + state2.prevStateHash + '|s2:' + state2.s2 + '|h1:' + state2.h1 + '|sig:' + sig2)} style={{ display: 'none' }}></button>
-      <button id='sendState3' onClick={() => sendMessage('state3|prevStateHash:' + state3.prevStateHash + '|s1:' + state3.s1 + '|startingCard:' + state3.startingCard + '|type:' + state3.type + '|sig:' + sig3)} style={{ display: 'none' }}></button>
-      <button id='sendDispute' onClick={() => sendMessage('disputeOngoing|')} style={{ display: 'none' }}></button>
-      <button id='canPlay' onClick={() => sendMessage('canPlay|')} style={{ display: 'none' }}></button>
-      <button id='sendState4' onClick={() => sendMessage(
-        'state4|prevStateHash:' + state4.prevStateHash + 
-        '|ah0:' + state4.ah0 + 
-        '|ah1:' + state4.ah1 + 
-        '|ah2:' + state4.ah2 + 
-        '|ah3:' + state4.ah3 +
-        '|sig:' + sig4)} style={{ display: 'none' }}></button>
-      <button id='sendState5' onClick={() => sendMessage('state5|prevStateHash:' + state5.prevStateHash + 
-        '|ah0:' + state5.ah0 + 
-        '|ah1:' + state5.ah1 + 
-        '|ah2:' + state5.ah2 + 
-        '|ah3:' + state5.ah3 + 
-        '|bh0:' + state5.bh0 + 
-        '|bh1:' + state5.bh1 + 
-        '|bh2:' + state5.bh2 + 
-        '|bh3:' + state5.bh3 + 
-        '|sA:' + state5.sA + 
-        '|sig:' + sig4)} style={{ display: 'none' }}></button>
-         <button id='sendState6' onClick={() => sendMessage('state6|prevStateHash:' + state6.prevStateHash + 
-        '|ah0:' + state4.ah0 + 
-        '|ah1:' + state4.ah1 + 
-        '|ah2:' + state4.ah2 + 
-        '|ah3:' + state4.ah3 + 
-        '|bh0:' + state4.bh0 + 
-        '|bh1:' + state4.bh1 + 
-        '|bh2:' + state4.bh2 + 
-        '|bh3:' + state4.bh3 + 
-        '|sA:' + state4.sA + 
-        '|sig:' + sig4)} style={{ display: 'none' }}></button>
-                {/* 'gameId': gameId,
+      <button
+        id="sendKeyB"
+        onClick={() => sendMessage("pubKeyB|" + getStarkKey(keyPair))}
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendKeyA"
+        onClick={() => sendMessage("pubKeyA|" + getStarkKey(keyPair))}
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendReady"
+        onClick={() => sendMessage("ready|")}
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendState1"
+        onClick={() => sendMessage("state1|h1:" + h1 + "|sig:" + sig1)}
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendState2"
+        onClick={() =>
+          sendMessage(
+            "state2|prevStateHash:" +
+              state2.prevStateHash +
+              "|s2:" +
+              state2.s2 +
+              "|h1:" +
+              state2.h1 +
+              "|sig:" +
+              sig2
+          )
+        }
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendState3"
+        onClick={() =>
+          sendMessage(
+            "state3|prevStateHash:" +
+              state3.prevStateHash +
+              "|s1:" +
+              state3.s1 +
+              "|startingCard:" +
+              state3.startingCard +
+              "|type:" +
+              state3.type +
+              "|sig:" +
+              sig3
+          )
+        }
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendDispute"
+        onClick={() => sendMessage("disputeOngoing|")}
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="canPlay"
+        onClick={() => sendMessage("canPlay|")}
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendState4"
+        onClick={() =>
+          sendMessage(
+            "state4|prevStateHash:" +
+              state4.prevStateHash +
+              "|ah0:" +
+              state4.ah0 +
+              "|ah1:" +
+              state4.ah1 +
+              "|ah2:" +
+              state4.ah2 +
+              "|ah3:" +
+              state4.ah3 +
+              "|sig:" +
+              sig4
+          )
+        }
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendState5"
+        onClick={() =>
+          sendMessage(
+            "state5|prevStateHash:" +
+              state5.prevStateHash +
+              "|ah0:" +
+              state5.ah0 +
+              "|ah1:" +
+              state5.ah1 +
+              "|ah2:" +
+              state5.ah2 +
+              "|ah3:" +
+              state5.ah3 +
+              "|bh0:" +
+              state5.bh0 +
+              "|bh1:" +
+              state5.bh1 +
+              "|bh2:" +
+              state5.bh2 +
+              "|bh3:" +
+              state5.bh3 +
+              "|sA:" +
+              state5.sA +
+              "|sig:" +
+              sig4
+          )
+        }
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendState6"
+        onClick={() =>
+          sendMessage(
+            "state6|prevStateHash:" +
+              state6.prevStateHash +
+              "|ah0:" +
+              state4.ah0 +
+              "|ah1:" +
+              state4.ah1 +
+              "|ah2:" +
+              state4.ah2 +
+              "|ah3:" +
+              state4.ah3 +
+              "|bh0:" +
+              state4.bh0 +
+              "|bh1:" +
+              state4.bh1 +
+              "|bh2:" +
+              state4.bh2 +
+              "|bh3:" +
+              state4.bh3 +
+              "|sA:" +
+              state4.sA +
+              "|sig:" +
+              sig4
+          )
+        }
+        style={{ display: "none" }}
+      ></button>
+      {/* 'gameId': gameId,
+        'prevStateHash': state5Hashed,
+        'ADrawedCards': ADrawedCards,
+        'BDrawedCards': BDrawedCards,
+        'sB': sB,
+        'type': 6 */}
+      <button
+        id="sendState4"
+        onClick={() =>
+          sendMessage(
+            "state4|prevStateHash:" +
+              state4.prevStateHash +
+              "|ah0:" +
+              state4.ah0 +
+              "|ah1:" +
+              state4.ah1 +
+              "|ah2:" +
+              state4.ah2 +
+              "|ah3:" +
+              state4.ah3 +
+              "|sig:" +
+              sig4
+          )
+        }
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendState5"
+        onClick={() =>
+          sendMessage(
+            "state5|prevStateHash:" +
+              state5.prevStateHash +
+              "|ah0:" +
+              state5.ah0 +
+              "|ah1:" +
+              state5.ah1 +
+              "|ah2:" +
+              state5.ah2 +
+              "|ah3:" +
+              state5.ah3 +
+              "|bh0:" +
+              state5.bh0 +
+              "|bh1:" +
+              state5.bh1 +
+              "|bh2:" +
+              state5.bh2 +
+              "|bh3:" +
+              state5.bh3 +
+              "|sA:" +
+              state5.sA +
+              "|sig:" +
+              sig4
+          )
+        }
+        style={{ display: "none" }}
+      ></button>
+      <button
+        id="sendState6"
+        onClick={() =>
+          sendMessage(
+            "state6|prevStateHash:" +
+              state6.prevStateHash +
+              "|ah0:" +
+              state4.ah0 +
+              "|ah1:" +
+              state4.ah1 +
+              "|ah2:" +
+              state4.ah2 +
+              "|ah3:" +
+              state4.ah3 +
+              "|bh0:" +
+              state4.bh0 +
+              "|bh1:" +
+              state4.bh1 +
+              "|bh2:" +
+              state4.bh2 +
+              "|bh3:" +
+              state4.bh3 +
+              "|sA:" +
+              state4.sA +
+              "|sig:" +
+              sig4
+          )
+        }
+        style={{ display: "none" }}
+      ></button>
+      {/* 'gameId': gameId,
         'prevStateHash': state5Hashed,
         'ADrawedCards': ADrawedCards,
         'BDrawedCards': BDrawedCards,
