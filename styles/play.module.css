@@ -40,8 +40,15 @@
   left: 4px;
 }
 
+.deckCard5 {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+}
+
 .middleCard {
   margin: 1rem;
+  position: relative;
 }
 
 .cards {

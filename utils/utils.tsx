@@ -16,3 +16,11 @@ export function hash(x: number): string {
 export function generateDisputeId() {
     return Math.floor(Math.random()*9999999999);
 }
+
+export function deduceCards(ownSecrets: number[], opponentSecrets: number[]) {
+    let cards;
+    ownSecrets.forEach((item, index, arr) => {
+        cards.push(pedersen([item, opponentSecrets[index]]));
+    });
+    return cards;
+}

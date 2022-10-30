@@ -23,7 +23,16 @@ import { getStarknet, IStarknetWindowObject } from "get-starknet";
 import { GetBlockResponse } from "starknet";
 import BN from "bn.js";
 import { getKeyPair } from "starknet/utils/ellipticCurve";
-import { checkIntegrity1, checkIntegrity2, makeState1, makeState2, makeState3, makeState4, makeState5, makeState6 } from "../utils/state";
+import {
+  checkIntegrity1,
+  checkIntegrity2,
+  makeState1,
+  makeState2,
+  makeState3,
+  makeState4,
+  makeState5,
+  makeState6,
+} from "../utils/state";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -34,7 +43,7 @@ const Play: NextPage = () => {
     index: 0,
     card: 0,
   });
-  const [startingCard, setStartingCard] = useState<any>();
+  const [startingCard, setStartingCard] = useState<number>(7);
   const [isOnChainCreationAvailable, setIsOnChainCreationAvailable] =
     useState<boolean>(false);
   const [connectDisabled, setConnectDisabled] = useState<boolean>(false);
@@ -50,8 +59,9 @@ const Play: NextPage = () => {
   const [shouldSendFraudProof, setShouldSendFraudProof] =
     useState<boolean>(false);
   const [areTransactionsPassed, setAreTransactionsPassed] = useState(false);
-  const [madeAllStates, setMadeAllStates] = useState(false)
-  const [drawCards, setDrawCards] = useState(false)
+  const [madeAllStates, setMadeAllStates] = useState(true);
+  const [depositBackCard, setDepositBackCard] = useState<boolean>(false);
+  const [drawCards, setDrawCards] = useState(false);
 
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
@@ -60,6 +70,13 @@ const Play: NextPage = () => {
 
   function onCardAnnouncedChoose(card: number, index: number): void {
     setCardToAnnounce({ index, card });
+  }
+
+  function onPlay(): void {
+    setIsYourTurn(!isYourTurn);
+    setModalCardToTell(!modalCardToTell);
+    setDepositBackCard(true);
+    setPlayerCards(playerCards.filter((card) => card !== cardToDeposit));
   }
 
   // -------------- libP2P management -----------------------------
@@ -275,22 +292,22 @@ const Play: NextPage = () => {
     }
   }, [roomId, peerId, router.query]);
 
-  const [state1, setState1] = useState<any>()
-  const [s1, setS1] = useState<any>()
-  const [h1, setH1] = useState<any>()
-  const [sig1, setSig1] = useState<any>()
-  const [sig2, setSig2] = useState<any>()
-  const [sig3, setSig3] = useState<any>()
-  const [sig4, setSig4] = useState<any>()
-  const [sig5, setSig5] = useState<any>()
-  const [sig6, setSig6] = useState<any>()
-  const [state2, setState2] = useState<any>()
-  const [state3, setState3] = useState<any>()
-  const [state4, setState4] = useState<any>()
-  const [state5, setState5] = useState<any>()
-  const [state6, setState6] = useState<any>()
-  const [stateTable, setStateTable] = useState<any>([])
-  const [ongoingDispute, setOngoingDispute] = useState(false)
+  const [state1, setState1] = useState<any>();
+  const [s1, setS1] = useState<any>();
+  const [h1, setH1] = useState<any>();
+  const [sig1, setSig1] = useState<any>();
+  const [sig2, setSig2] = useState<any>();
+  const [sig3, setSig3] = useState<any>();
+  const [sig4, setSig4] = useState<any>();
+  const [sig5, setSig5] = useState<any>();
+  const [sig6, setSig6] = useState<any>();
+  const [state2, setState2] = useState<any>();
+  const [state3, setState3] = useState<any>();
+  const [state4, setState4] = useState<any>();
+  const [state5, setState5] = useState<any>();
+  const [state6, setState6] = useState<any>();
+  const [stateTable, setStateTable] = useState<any>([]);
+  const [ongoingDispute, setOngoingDispute] = useState(false);
 
   useEffect(() => {
     if (libp2p && isInit) {
@@ -509,7 +526,7 @@ const Play: NextPage = () => {
           };
           stateTable.push(_state3);
           // setAreTransactionsPassed(true)
-          setMadeAllStates(true)
+          setMadeAllStates(true);
           setDrawCards(true);
           var card: any = new BN(stateTable[2].startingCard.substring(2), 16)
           setStartingCard(card.mod(new BN(13)).toNumber() + 1);
@@ -530,8 +547,8 @@ const Play: NextPage = () => {
           const timer = setTimeout(() => {
             var btnMsg = document.getElementById("sendState4");
             if (btnMsg) {
-              btnMsg.click()
-              console.log('CLICKING state 4')
+              btnMsg.click();
+              console.log("CLICKING state 4");
             }
           }, 1000);
         } else if (msg[0] == 'sendDispute') {
@@ -543,26 +560,26 @@ const Play: NextPage = () => {
           setMadeAllStates(true)
           var card: any = new BN(stateTable[2].startingCard.substring(2), 16)
           setStartingCard(card.mod(new BN(13)).toNumber() + 1);
-          console.log('card', card)
-          setDrawCards(true)
+          console.log("card", card);
+          setDrawCards(true);
 
           // Rebuild state4
-          console.log('state4 received from B', msg)
-          const prevStateHash = msg[1].split(':')[1]
-          const ah0 = msg[2].split(':')[1]
-          const ah1 = msg[3].split(":")[1]
-          const ah2 = msg[4].split(':')[1]
-          const ah3 = msg[5].split(':')[1]
+          console.log("state4 received from B", msg);
+          const prevStateHash = msg[1].split(":")[1];
+          const ah0 = msg[2].split(":")[1];
+          const ah1 = msg[3].split(":")[1];
+          const ah2 = msg[4].split(":")[1];
+          const ah3 = msg[5].split(":")[1];
           const _state4 = {
-            'gameId': gameId,
-            'prevStateHash': prevStateHash,
-            'ah0': ah0,
-            'ah1': ah1,
-            'ah2': ah2,
-            'ah3': ah3,
-            'type': 4
+            gameId: gameId,
+            prevStateHash: prevStateHash,
+            ah0: ah0,
+            ah1: ah1,
+            ah2: ah2,
+            ah3: ah3,
+            type: 4,
           };
-          stateTable.push(_state4)
+          stateTable.push(_state4);
 
           const [state5, sig, bs0, bs1, bs2, bs3] = makeState5(_state4, gameId, keyPair, stateTable);
           setState5(state5)
@@ -578,8 +595,8 @@ const Play: NextPage = () => {
           const timer = setTimeout(() => {
             var btnMsg = document.getElementById("sendState5");
             if (btnMsg) {
-              btnMsg.click()
-              console.log('CLICKING state 5')
+              btnMsg.click();
+              console.log("CLICKING state 5");
             }
           }, 1000);
         } else if (msg[0] == 'state5') {
@@ -796,6 +813,17 @@ const Play: NextPage = () => {
                 </div>
                 <div className={styles.middleCard}>
                   <img src={`/cards/${startingCard}_hearts.svg`} width={150} />
+                  {depositBackCard ? (
+                    <>
+                      <img
+                        className={styles.deckCard5}
+                        src={`/cards/cardBack.svg`}
+                        width={150}
+                      />
+                    </>
+                  ) : (
+                    <></>
+                  )}
                 </div>
               </div>
             </div>
@@ -871,6 +899,9 @@ const Play: NextPage = () => {
                   <div className={styles.depositCard}>
                     <div className={styles.announcedCard}>
                       {allCards.map((card, index) => {
+                        if (card < startingCard) {
+                          return <></>;
+                        }
                         return (
                           <img
                             key={index}
@@ -889,14 +920,7 @@ const Play: NextPage = () => {
                     <h3>Choose the card you want to announce</h3>
                   </div>
                 </div>
-                <Button
-                  onClick={() => {
-                    setIsYourTurn(!isYourTurn);
-                    setModalCardToTell(!modalCardToTell);
-                  }}
-                >
-                  Play
-                </Button>
+                <Button onClick={() => onPlay()}>Play</Button>
               </div>
             </Modal>
           </>
