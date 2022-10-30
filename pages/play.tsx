@@ -33,6 +33,8 @@ import {
   makeState5,
   makeState6,
 } from "../utils/state";
+import { deduceCards } from "../utils/utils";
+import { any } from "prop-types";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -50,7 +52,7 @@ const Play: NextPage = () => {
 
   // Data needed for the game
   const [isYourTurn, setIsYourTurn] = useState<boolean>(false);
-  const playerCards = useState<any>([]);
+  const [playerCards, setPlayerCards] = useState<any>([]);
   const playerDepositedCards: number[] = [];
   const opponentDepositedCards: string[] = [];
   const [lastAnnouncedCard, setLastAnnouncedCard] = useState<
@@ -59,7 +61,7 @@ const Play: NextPage = () => {
   const [shouldSendFraudProof, setShouldSendFraudProof] =
     useState<boolean>(false);
   const [areTransactionsPassed, setAreTransactionsPassed] = useState(false);
-  const [madeAllStates, setMadeAllStates] = useState(true);
+  const [madeAllStates, setMadeAllStates] = useState(false);
   const [depositBackCard, setDepositBackCard] = useState<boolean>(false);
   const [drawCards, setDrawCards] = useState(false);
 
@@ -76,7 +78,7 @@ const Play: NextPage = () => {
     setIsYourTurn(!isYourTurn);
     setModalCardToTell(!modalCardToTell);
     setDepositBackCard(true);
-    setPlayerCards(playerCards.filter((card) => card !== cardToDeposit));
+    setPlayerCards(playerCards.filter((card : any) => card !== cardToDeposit));
   }
 
   // -------------- libP2P management -----------------------------
@@ -636,7 +638,11 @@ const Play: NextPage = () => {
            console.log('card1', card1)
            console.log('card2', card2)
            console.log('card3', card3)
-           playerCards.push([card0, card1, card2, card3])
+           setPlayerCards([
+            (new BN((card0 as string).substring(2), 16)).mod(new BN(13)).toNumber() + 1, 
+            (new BN((card1 as string).substring(2), 16)).mod(new BN(13)).toNumber() + 1, 
+            (new BN((card2 as string).substring(2), 16)).mod(new BN(13)).toNumber() + 1, 
+            (new BN((card3 as string).substring(2), 16)).mod(new BN(13)).toNumber() + 1])
            setDrawCards(false)
            const timer = setTimeout(() => {
              var btnMsg = document.getElementById("sendState6");
@@ -663,8 +669,16 @@ const Play: NextPage = () => {
             'txId': 0
            };
            stateTable.push(_state6)
+           let varBs = JSON.parse(localStorage.getItem("bs") as string)
 
-          //  TODO playerCards.push([card0, card1, card2, card3])
+          let cards = deduceCards([varBs.bs0, varBs.bs1, varBs.bs2, varBs.bs3], [sB as any, sB as any, sB as any, sB as any])
+          console.log('cards', cards)
+          let _cards : any;
+          cards.map((card : string) => {
+            _cards.push((new BN(card.substring(2), 16)).mod(new BN(13)).toNumber() + 1)
+          })
+          setPlayerCards(_cards)
+
            setDrawCards(false)
         }
       });
@@ -763,7 +777,7 @@ const Play: NextPage = () => {
     const [state1, sig, s1, h1] = makeState1(gameId, keyPair, stateTable);
     setState1(state1);
     setH1(h1);
-    localStorage.setItem("s1", s1);
+    localStorage.setItem("s1", s1 as any);
     localStorage.setItem("h1", h1);
     setSig1(sig);
     const timer = setTimeout(() => {
@@ -846,7 +860,7 @@ const Play: NextPage = () => {
                 ) : null}
               </div>
               <div className={styles.playerCards}>
-                {playerCards.map((card, index) => (
+                {playerCards.map((card : any, index : number) => (
                   <img
                     key={index}
                     onClick={() => onCardDepositChoose(card)}

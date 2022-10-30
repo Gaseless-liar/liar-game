@@ -18,9 +18,9 @@ export function generateDisputeId() {
 }
 
 export function deduceCards(ownSecrets: number[], opponentSecrets: number[]) {
-    let cards;
+    let cards : any = [];
     ownSecrets.forEach((item, index, arr) => {
-        cards.push(pedersen([item, opponentSecrets[index]]));
+        cards[index] = pedersen([item, opponentSecrets[index]]);
     });
-    return cards;
+    return [cards];
 }
