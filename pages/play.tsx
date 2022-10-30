@@ -68,6 +68,7 @@ const Play: NextPage = () => {
   function onCardDepositChoose(card: number): void {
     setModalCardToTell(true);
     setCardToDeposit(card);
+    sendMessage('cardDeposited|')
   }
 
   function onCardAnnouncedChoose(card: number, index: number): void {
@@ -672,14 +673,15 @@ const Play: NextPage = () => {
            let varBs = JSON.parse(localStorage.getItem("bs") as string)
 
           let cards = deduceCards([varBs.bs0, varBs.bs1, varBs.bs2, varBs.bs3], [sB as any, sB as any, sB as any, sB as any])
-          console.log('cards', cards)
-          let _cards : any;
-          cards.map((card : string) => {
-            _cards.push((new BN(card.substring(2), 16)).mod(new BN(13)).toNumber() + 1)
-          })
-          setPlayerCards(_cards)
+          let _card0 = (new BN(cards[0][0].substring(2), 16)).mod(new BN(13)).toNumber() + 1
+          let _card1 = (new BN(cards[0][1].substring(2), 16)).mod(new BN(13)).toNumber() + 1
+          let _card2 = (new BN(cards[0][2].substring(2), 16)).mod(new BN(13)).toNumber() + 1
+          let _card3 = (new BN(cards[0][3].substring(2), 16)).mod(new BN(13)).toNumber() + 1
 
-           setDrawCards(false)
+          setPlayerCards([_card0, _card1, _card2, _card3])
+          setDrawCards(false)
+        } else if (msg[0] == 'cardDeposited') {
+          console.log('card deposited')
         }
       });
     }
