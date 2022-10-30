@@ -1,5 +1,3 @@
-import { GamesOutlined } from '@mui/icons-material';
-import { syncBuiltinESMExports } from 'module';
 import { KeyPair, Signature } from 'starknet';
 import { computeHashOnElements, pedersen } from 'starknet/utils/hash';
 import { BigNumberish } from 'starknet/utils/number';
@@ -192,7 +190,7 @@ export function makeState6(state5: any, gameId: number, keyPairB: KeyPair, as0: 
 
 export function makeState7(
         prevState: any, gameId: number, action: number, keyPairA: KeyPair, stateTable: any[],
-        stackFgp: string[], depositCard: number,
+        stackFgp: string[], depositCard: number, announcedCard: number, cardLeft: number
     ) {
     const prevStateHashed = computeHashOnElements(Object.values(prevState));
     let stateHash;
@@ -205,6 +203,8 @@ export function makeState7(
         state7 = {
             'gameId': gameId,
             'prevStateHash': prevStateHashed,
+            'anouncedCard': announcedCard,
+            'cardLeft': cardLeft-1,
             'stackFgp': stackFgp,
             'type': 7,
             'txId': prevState.txId+1,
@@ -245,16 +245,62 @@ export function makeState8(state7: any, gameId: number, keyPairB: KeyPair, state
     return [state8, sig];
 }
 
-export function makeState9(state8: any, gameId: number, keyPairA: KeyPair, stateTable: any[]) {
+export function makeState9(state8: any, gameId: number, s1: number, ADrawedCards: [number, string][], keyPairA: KeyPair, stateTable: any[]) {
     const prevStateHash = computeHashOnElements(Object.values(state8));
+    const card = pedersen([s1, state8.s2]);
+    ADrawedCards.push([state8.s2, state8.h1]);
     const state9 = {
         'gameId': gameId,
         'prevStateHash': prevStateHash,
+        'ADrawedCards': ADrawedCards,
         'type': 9,
         'txId': state8.txId+1
     };
     const stateHash = computeHashOnElements(Object.values(state9));
     const sig = signH(keyPairA, stateHash);
     stateTable.push(state9);
-    return [state9, sig];
+    return [state9, sig, card];
 }
+
+// il revele la derniere carte
+export function makeState10(prevState: any, gameId: number, s1: number, keyPairA: KeyPair, stateTable: any[]) {
+    const prevStateHash = computeHashOnElements(Object.values(prevState));
+
+    const state10 = {
+        'gameId': gameId,
+        'prevStateHash': prevStateHash,
+        's1': s1,
+        'type': 10,
+        'txId': prevState.txId+1
+    };
+    const stateHash = computeHashOnElements(Object.values(state10));
+    const sig = signH(keyPairA, stateHash);
+    stateTable.push(state10);
+    return [state10, sig];
+}
+
+/*
+// B recupere les cartes
+// les cartes de A de la stack sont devenues public
+// les 
+export function makeState11(state10: any, gameId: number, stackFgp: string[], keyPairA: KeyPair, stateTable: any[],
+        ADrawedCards: [number, string][], BDrawedCards: [number, string][], APublicCards: number[]
+    ) {
+    const prevStateHash = computeHashOnElements(Object.values(state10));
+    
+    const state11 = {
+        'gameId': gameId,
+        'prevStateHash': prevStateHash,
+        'ADrawedCards':
+        'BDrawedCards':
+        'APublicCards':
+        'stackFgp': 
+        'type': 11,
+        'txId': state10.txId+1
+    };
+    const stateHash = computeHashOnElements(Object.values(state11));
+    const sig = signH(keyPairA, stateHash);
+    stateTable.push(state11);
+    return [state11, sig];
+}
+*/
