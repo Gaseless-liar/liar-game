@@ -20,7 +20,7 @@ import { getStarknet, IStarknetWindowObject } from "get-starknet";
 import { GetBlockResponse } from "starknet";
 import BN from "bn.js";
 import { getKeyPair } from "starknet/utils/ellipticCurve";
-import { checkIntegrity, checkIntegrity2, makeState1, makeState2, makeState3 } from "../utils/state";
+import { checkIntegrity1, checkIntegrity2, makeState1, makeState2, makeState3 } from "../utils/state";
 
 const Play: NextPage = () => {
   //Front end Data
@@ -233,7 +233,7 @@ const Play: NextPage = () => {
     setLibp2p(libp2p);
     setPeerId(libp2p.peerId.toString());
 
-    const rand = Math.floor(Math.random() * 12);
+    const rand = Math.floor(Math.random() * 99999999);
     setGameId(rand)
 
     var topic = "room_" + libp2p.peerId.toString();
@@ -317,7 +317,7 @@ const Play: NextPage = () => {
 
         if (msg[0] == 'pubKeyB') {
             setOtherPubKey(msg[1])
-            if(player == 1) startGame()
+            if(player == 1) startGame(msg[1])
         } else if (msg[0] == 'pubKeyA') {
           setOtherPubKey(msg[1])
           startGameP2()
@@ -335,10 +335,10 @@ const Play: NextPage = () => {
            }
           stateTable.push(_state1)
           var _key = new BN(otherPubKey.substring(2), 16)
-          const [generateDisputeId, sigState1] = checkIntegrity(_state1, [_sig[0], _sig[1]], gameId, _key, keyPair, stateTable)
+          const [generateDisputeId, sigState1] = checkIntegrity1(_state1, [_sig[0], _sig[1]], gameId, _key)
 
-          if (!generateDisputeId && !sigState1) {
-            const [state2, sig2] = makeState2(_state1, [_sig[0], _sig[1]], gameId, _key, keyPair, stateTable)
+          if (generateDisputeId == 0 && sigState1 == 0) {
+            const [state2, sig2] = makeState2(_state1, [_sig[0], _sig[1]], gameId, keyPair, stateTable)
             setState2(state2)
             setSig2(sig2)
             const timer = setTimeout(() => {
@@ -357,7 +357,7 @@ const Play: NextPage = () => {
               _starknet.account.execute({
                 contractAddress: gaslessContract.address.toLowerCase(),
                 entrypoint: 'open_dispute_state_1',
-                calldata: [generateDisputeId, gameId, _h1, _sig_]
+                calldata: [generateDisputeId, gameId, _h1, _sig_[0], _sig_[1]]
               }).then((response: any) => {
                 response.player = player
                 setTransactions(response)
@@ -388,7 +388,7 @@ const Play: NextPage = () => {
           stateTable.push(_state2)
 
           var _key = new BN(otherPubKey.substring(2), 16)
-          const [generateDisputeId, sigState1] = checkIntegrity2(_state2, [_sig[0], _sig[1]], s1, stateTable[0].h1, gameId, otherPubKey, keyPair, stateTable)
+          const [generateDisputeId, sigState1] = checkIntegrity2(_state2, [_sig[0], _sig[1]], gameId, s1, stateTable[0].h1, otherPubKey)
 
           if (!generateDisputeId && !sigState1) {
             setOngoingDispute(true)
@@ -414,7 +414,7 @@ const Play: NextPage = () => {
             }
 
           } else {
-            const [state3, sig] = makeState3(_state2, [_sig[0], _sig[1]], s1, stateTable[0].h1, gameId, otherPubKey, keyPair, stateTable)
+            const [state3, sig] = makeState3(_state2, [_sig[0], _sig[1]], gameId, s1, keyPair, stateTable)
             setState3(state3)
             setSig3(sig)
             const timer = setTimeout(() => {
@@ -486,7 +486,7 @@ const Play: NextPage = () => {
     return getStarkKey(_key)
   }
 
-  const startGame = async () => {
+  const startGame = async (key_b : string) => {
     console.log('starting game')
     var calls : any[] = [];
     var _account = _starknet?.account.address.slice(2)
@@ -504,7 +504,7 @@ const Play: NextPage = () => {
     calls.push({
         contractAddress: gaslessContract.address.toLowerCase(),
         entrypoint: 'create_game',
-        calldata: [gameId, 500, 0, getStarkKey(keyPair), otherPubKey]
+        calldata: [gameId, 500, 0, getStarkKey(keyPair), key_b]
     });
     calls.push({
       contractAddress: gaslessContract.address.toLowerCase(),
