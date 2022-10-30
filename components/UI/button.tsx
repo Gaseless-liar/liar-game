@@ -5,20 +5,22 @@ type ButtonProps = {
   onClick: () => void;
   children: string | ReactNode;
   size?: string;
-  id?: string
+  id?: string,
+  disabled?: boolean
 };
 
 const Button: FunctionComponent<ButtonProps> = ({
   children,
   size = "large",
   onClick,
-  id
+  id,
+  disabled
 }) => {
   return (
     <button
       id={id}
       onClick={onClick}
-      className={size === "small" ? styles.buttonSmall : styles.buttonLarge}
+      className={(size === "small" ? styles.buttonSmall : styles.buttonLarge) + " " + (disabled ? styles.buttonDisabled : " ")}
     >
       {children}
     </button>

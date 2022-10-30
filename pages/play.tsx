@@ -34,6 +34,7 @@ const Play: NextPage = () => {
   const [startingCard, setStartingCard] = useState<any>();
   const [isOnChainCreationAvailable, setIsOnChainCreationAvailable] =
     useState<boolean>(false);
+  const [connectDisabled, setConnectDisabled] = useState<boolean>(false);
 
   // Data needed for the game
   const [isYourTurn, setIsYourTurn] = useState<boolean>(false);
@@ -87,7 +88,7 @@ const Play: NextPage = () => {
       _starknet.account
         .getBlock()
         .then((newBlock: any) => {
-          setBlock((oldBlock : any) => {
+          setBlock((oldBlock: any) => {
             if (oldBlock?.block_hash === newBlock.block_hash) {
               return oldBlock;
             }
@@ -96,34 +97,34 @@ const Play: NextPage = () => {
             console.log('transactions', transactions)
             if (transactions)
               console.log('length', Object.keys(transactions).length)
-              
+
             if (transactions && Object.keys(transactions).length > 0) {
 
-                const tx = newBlock.transactions.filter((transaction: any) => {
-                  return transaction.transaction_hash == transactions.transaction_hash;
-                });
+              const tx = newBlock.transactions.filter((transaction: any) => {
+                return transaction.transaction_hash == transactions.transaction_hash;
+              });
 
-                if (tx.length > 0) {
-                  console.log('transaction was accepted', tx)
+              if (tx.length > 0) {
+                console.log('transaction was accepted', tx)
 
-                  if (transactions.player == 1) {
-                    console.log('sending msg to P2')
+                if (transactions.player == 1) {
+                  console.log('sending msg to P2')
 
-                    var btnMsg = document.getElementById("sendKeyA");
-                    if (btnMsg) {
-                      btnMsg.click()
-                      console.log('send pubKeyA')
-                    }
-                  } else if (transactions.player == 2) {
-                    setAreTransactionsPassed(true)
-                    var btnMsg = document.getElementById("sendReady");
-                    if (btnMsg) {
-                      btnMsg.click()
-                      console.log('send ready msg')
-                    }
+                  var btnMsg = document.getElementById("sendKeyA");
+                  if (btnMsg) {
+                    btnMsg.click()
+                    console.log('send pubKeyA')
                   }
-                  setTransactions([])
+                } else if (transactions.player == 2) {
+                  setAreTransactionsPassed(true)
+                  var btnMsg = document.getElementById("sendReady");
+                  if (btnMsg) {
+                    btnMsg.click()
+                    console.log('send ready msg')
+                  }
                 }
+                setTransactions([])
+              }
             }
 
             return newBlock;
@@ -133,8 +134,8 @@ const Play: NextPage = () => {
           console.log("failed fetching block", error);
         })
         .finally(() => setLoading(false));
-      }
-    }, [_starknet, block, transactions])
+    }
+  }, [_starknet, block, transactions])
 
 
   useEffect(() => {
@@ -148,7 +149,7 @@ const Play: NextPage = () => {
   }, [fetchBlock]);
 
 
-    // ----------- END blocks, transactions -----------
+  // ----------- END blocks, transactions -----------
 
   const joinGame = async (otherPlayerId: string) => {
     var bootstrapList = [
@@ -190,6 +191,7 @@ const Play: NextPage = () => {
       var btnMsg = document.getElementById("sendKeyB");
       if (btnMsg) {
         btnMsg.click()
+        setConnectDisabled(true);
         console.log('CLICKING')
       }
     }, 1000);
@@ -316,8 +318,8 @@ const Play: NextPage = () => {
         var msg = data.split('|')
 
         if (msg[0] == 'pubKeyB') {
-            setOtherPubKey(msg[1])
-            if(player == 1) startGame(msg[1])
+          setOtherPubKey(msg[1])
+          if(player == 1) startGame(msg[1])
         } else if (msg[0] == 'pubKeyA') {
           setOtherPubKey(msg[1])
           startGameP2()
@@ -328,11 +330,11 @@ const Play: NextPage = () => {
           const _h1 = msg[1].split(':')[1]
           const _sig1 = msg[2].split(':')[1]
           const _sig = _sig1.split(',')
-           const _state1 = {
-            'gameId' : gameId,
-            'h1' : _h1,
-            'type' : 1,
-           }
+          const _state1 = {
+            'gameId': gameId,
+            'h1': _h1,
+            'type': 1,
+          }
           stateTable.push(_state1)
           var _key = new BN(otherPubKey.substring(2), 16)
           const [generateDisputeId, sigState1] = checkIntegrity1(_state1, [_sig[0], _sig[1]], gameId, _key)
@@ -351,7 +353,7 @@ const Play: NextPage = () => {
           } else {
             // ! IF dispute_id > call open_dispute_state_1(dispute_id, game_id, h1, sig) > jeu sur pause + dire qu'il y a un problème 
             setOngoingDispute(true)
-            if(_starknet) {
+            if (_starknet) {
               var _account = _starknet?.account.address.slice(2)
               var _sig_ = sign(keyPair, _account as string)
               _starknet.account.execute({
@@ -379,11 +381,11 @@ const Play: NextPage = () => {
           const _sig2 = msg[3].split(':')[1]
           const _sig = _sig2.split(',')
           const _state2 = {
-            'gameId' : gameId,
-            'prevStateHash' : prevStateHash,
-            's2' : _s2,
-            'h1' : stateTable[0].h1,
-            'type' : 2
+            'gameId': gameId,
+            'prevStateHash': prevStateHash,
+            's2': _s2,
+            'h1': stateTable[0].h1,
+            'type': 2
           }
           stateTable.push(_state2)
 
@@ -392,7 +394,7 @@ const Play: NextPage = () => {
 
           if (!generateDisputeId && !sigState1) {
             setOngoingDispute(true)
-            if(_starknet) {
+            if (_starknet) {
               var _account = _starknet?.account.address.slice(2)
               var _sig_ = sign(keyPair, _account as string)
               _starknet.account.execute({
@@ -445,7 +447,7 @@ const Play: NextPage = () => {
           stateTable.push(_state3)
           // setAreTransactionsPassed(true)
           setMadeAllStates(true)
-          var card : any = new BN(_startingCard, 16)
+          var card: any = new BN(_startingCard, 16)
           setStartingCard(card.umod(13));
           console.log('card', card)
 
@@ -463,7 +465,7 @@ const Play: NextPage = () => {
           console.log('can Play to player B')
           // setAreTransactionsPassed(true);
           setMadeAllStates(true)
-          var card : any = new BN(stateTable[2].startingCard, 16)
+          var card: any = new BN(stateTable[2].startingCard, 16)
           setStartingCard(card.umod(13));
           console.log('card', card)
         }
@@ -488,7 +490,7 @@ const Play: NextPage = () => {
 
   const startGame = async (key_b : string) => {
     console.log('starting game')
-    var calls : any[] = [];
+    var calls: any[] = [];
     var _account = _starknet?.account.address.slice(2)
     var _sig = sign(keyPair, _account as string)
     calls.push({
@@ -511,7 +513,7 @@ const Play: NextPage = () => {
       entrypoint: 'set_a_user',
       calldata: [gameId, _sig[0], _sig[1]]
     });
-    if(_starknet)
+    if (_starknet)
       _starknet.account.execute(calls).then((response: any) => {
         response.player = player
         setTransactions(response)
@@ -519,10 +521,10 @@ const Play: NextPage = () => {
   }
 
   const startGameP2 = async () => {
-    if(_starknet) {
+    if (_starknet) {
       var _account = _starknet?.account.address.slice(2)
       var _sig = sign(keyPair, _account as string)
-      var calls : any[] = [];
+      var calls: any[] = [];
 
       calls.push({
         contractAddress: ethContract.address.toLowerCase(),
@@ -548,7 +550,7 @@ const Play: NextPage = () => {
 
   const launchState1 = () => {
     console.log('launching state 1')
-    const [ state1, sig, s1, h1 ] = makeState1(gameId, keyPair, stateTable);
+    const [state1, sig, s1, h1] = makeState1(gameId, keyPair, stateTable);
     setState1(state1)
     setH1(h1)
     setS1(s1)
@@ -738,17 +740,16 @@ const Play: NextPage = () => {
             ) : (
               <>
                 <h1 style={{ 'color': '#FFF' }}>We&apos;re initializing the game</h1>
-                {!areTransactionsPassed ? (
-                  <Button
-                    onClick={() => {
-                      sendMessage('pubKeyB|'+ getStarkKey(keyPair))
-                    }}
-                    size="small"
-                  >
-                    Connect to player 1
-                  </Button>
-                )
-                : <></>}
+                <Button
+                  onClick={() => {
+                    if (!connectDisabled)
+                      sendMessage('pubKeyB|' + getStarkKey(keyPair))
+                  }}
+                  size="small"
+                  disabled={connectDisabled}
+                >
+                  Connect to player 1
+                </Button>
               </>
             )}
           </div>
@@ -756,14 +757,14 @@ const Play: NextPage = () => {
       ) : (
         <Button onClick={() => initGame()}>Create game</Button>
       )}
-      <button id='sendKeyB' onClick={() => sendMessage('pubKeyB|'+ getStarkKey(keyPair))} style={{display: 'none'}}></button>
-      <button id='sendKeyA' onClick={() => sendMessage('pubKeyA|'+ getStarkKey(keyPair))} style={{display: 'none'}}></button>
-      <button id='sendReady' onClick={() => sendMessage('ready|')} style={{display: 'none'}}></button>
-      <button id='sendState1' onClick={() => sendMessage('state1|h1:'+h1+'|sig:'+sig1)} style={{display: 'none'}}></button>
-      <button id='sendState2' onClick={() => sendMessage('state2|prevStateHash:'+state2.prevStateHash+'|s2:'+state2.s2+'|h1:'+state2.h1+'|sig:'+sig2)} style={{display: 'none'}}></button>
-      <button id='sendState3' onClick={() => sendMessage('state3|prevStateHash:'+state3.prevStateHash+'|s1:'+state3.s1+'|startingCard:'+state3.startingCard+'|type:'+state3.type+'|sig:'+sig3)} style={{display: 'none'}}></button>
-      <button id='sendDispute' onClick={() => sendMessage('disputeOngoing|')} style={{display: 'none'}}></button>
-      <button id='canPlay' onClick={() => sendMessage('canPlay|')} style={{display: 'none'}}></button>
+      <button id='sendKeyB' onClick={() => sendMessage('pubKeyB|' + getStarkKey(keyPair))} style={{ display: 'none' }}></button>
+      <button id='sendKeyA' onClick={() => sendMessage('pubKeyA|' + getStarkKey(keyPair))} style={{ display: 'none' }}></button>
+      <button id='sendReady' onClick={() => sendMessage('ready|')} style={{ display: 'none' }}></button>
+      <button id='sendState1' onClick={() => sendMessage('state1|h1:' + h1 + '|sig:' + sig1)} style={{ display: 'none' }}></button>
+      <button id='sendState2' onClick={() => sendMessage('state2|prevStateHash:' + state2.prevStateHash + '|s2:' + state2.s2 + '|h1:' + state2.h1 + '|sig:' + sig2)} style={{ display: 'none' }}></button>
+      <button id='sendState3' onClick={() => sendMessage('state3|prevStateHash:' + state3.prevStateHash + '|s1:' + state3.s1 + '|startingCard:' + state3.startingCard + '|type:' + state3.type + '|sig:' + sig3)} style={{ display: 'none' }}></button>
+      <button id='sendDispute' onClick={() => sendMessage('disputeOngoing|')} style={{ display: 'none' }}></button>
+      <button id='canPlay' onClick={() => sendMessage('canPlay|')} style={{ display: 'none' }}></button>
     </div>
   );
 };
